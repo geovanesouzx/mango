@@ -60,6 +60,16 @@
             transform: perspective(1000px) rotateY(-5deg) rotateX(2deg);
         }
 
+        /* Desativa o efeito 3D em telas muito pequenas para melhor visualização */
+        @media (max-width: 640px) {
+            .mockup-container {
+                transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+            }
+            .mockup-container:hover {
+                transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+            }
+        }
+
         .gradient-text {
             background: linear-gradient(to right, #fbbf24, #FF7A00);
             -webkit-background-clip: text;
@@ -93,17 +103,19 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
-                <div class="flex items-center gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <img src="https://files.catbox.moe/b97doa.png" alt="Mango Logo" class="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(255,122,0,0.5)]">
-                    <span class="text-2xl font-black text-white tracking-tight">Mango</span>
+                <div class="flex items-center gap-2 md:gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <img src="https://files.catbox.moe/b97doa.png" alt="Mango Logo" class="w-8 h-8 md:w-10 md:h-10 object-contain drop-shadow-[0_0_8px_rgba(255,122,0,0.5)]">
+                    <span class="text-xl md:text-2xl font-black text-white tracking-tight">Mango</span>
                 </div>
 
-                <!-- Links / CTA -->
-                <div class="hidden md:flex items-center gap-8">
-                    <a href="#features" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Recursos</a>
-                    <a href="#community" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Comunidade</a>
-                    <a href="https://www.mediafire.com/file/gvuporcsdh5fq7m/mango_v4.0.1.apk/file" target="_blank" class="bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:bg-slate-200 transition-transform hover:scale-105">
-                        Baixar App Grátis
+                <!-- Links / CTA Responsivo -->
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex items-center gap-8">
+                        <a href="#features" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Recursos</a>
+                        <a href="#community" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Comunidade</a>
+                    </div>
+                    <a href="https://www.mediafire.com/file/gvuporcsdh5fq7m/mango_v4.0.1.apk/file" target="_blank" class="bg-white text-black px-4 py-2 md:px-6 md:py-2.5 rounded-full font-bold text-xs md:text-sm hover:bg-slate-200 transition-transform hover:scale-105">
+                        Baixar Grátis
                     </a>
                 </div>
             </div>
@@ -119,20 +131,20 @@
             <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
                 
                 <!-- Textos Hero -->
-                <div class="max-w-2xl">
+                <div class="max-w-2xl text-center lg:text-left">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mango-brand/10 border border-mango-brand/20 text-mango-brand text-xs font-bold uppercase tracking-wider mb-6 fade-in-up">
                         <span class="w-2 h-2 rounded-full bg-mango-brand animate-pulse"></span>
                         Versão 4.0 Disponível
                     </div>
-                    <h1 class="text-5xl lg:text-7xl font-black text-white leading-[1.1] mb-6 fade-in-up delay-100">
+                    <h1 class="text-4xl sm:text-5xl lg:text-7xl font-black text-white leading-[1.1] mb-6 fade-in-up delay-100">
                         O seu universo <br>
                         <span class="gradient-text">favorito</span> em um só lugar.
                     </h1>
-                    <p class="text-lg text-slate-400 mb-8 fade-in-up delay-200 leading-relaxed max-w-lg">
+                    <p class="text-base sm:text-lg text-slate-400 mb-8 fade-in-up delay-200 leading-relaxed max-w-lg mx-auto lg:mx-0">
                         Assista aos melhores animes e séries com qualidade impecável. Crie seu perfil, faça pedidos diretos à moderação e continue exatamente de onde parou.
                     </p>
                     
-                    <div class="flex flex-col sm:flex-row gap-4 fade-in-up delay-300">
+                    <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 fade-in-up delay-300">
                         <a href="https://www.mediafire.com/file/gvuporcsdh5fq7m/mango_v4.0.1.apk/file" target="_blank" class="flex items-center justify-center gap-2 bg-mango-brand text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-600 transition-all hover:-translate-y-1 shadow-lg shadow-mango-brand/25">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                             Baixar para Android
@@ -142,7 +154,7 @@
                         </a>
                     </div>
                     
-                    <div class="mt-8 flex items-center gap-4 text-sm text-slate-500 fade-in-up delay-300">
+                    <div class="mt-8 flex justify-center lg:justify-start items-center gap-4 text-sm text-slate-500 fade-in-up delay-300">
                         <div class="flex -space-x-2">
                             <img class="w-8 h-8 rounded-full border-2 border-appbg" src="https://i.pravatar.cc/100?img=1" alt="User">
                             <img class="w-8 h-8 rounded-full border-2 border-appbg" src="https://i.pravatar.cc/100?img=2" alt="User">
@@ -154,7 +166,7 @@
                 </div>
 
                 <!-- Mockup App (Visual) -->
-                <div class="relative lg:h-[600px] flex justify-center items-center fade-in-up delay-200">
+                <div class="relative lg:h-[600px] flex justify-center items-center fade-in-up delay-200 mt-12 lg:mt-0 scale-90 sm:scale-100">
                     <!-- Celular Falso feito em CSS -->
                     <div class="mockup-container w-[280px] h-[580px] bg-black rounded-[40px] border-[8px] border-slate-800 shadow-2xl overflow-hidden relative z-10 flex flex-col">
                         <!-- Top Notch -->
@@ -166,42 +178,42 @@
                         <div class="flex-1 bg-appbg overflow-hidden flex flex-col">
                             <!-- Hero App -->
                             <div class="h-[45%] relative bg-gradient-to-b from-slate-800 to-appbg">
-                                <div class="absolute inset-0 bg-[url('https://image.tmdb.org/t/p/original/rBOnrVlck7BIlGeWVlzYiZeg4l2.jpg')] bg-cover bg-center opacity-60"></div>
+                                <div class="absolute inset-0 bg-[url('https://image.tmdb.org/t/p/original/rBOnrVlck7BIlGeWVlzYiZeg4l2.jpg')] bg-cover bg-center opacity-70"></div>
                                 <div class="absolute inset-0 bg-gradient-to-t from-appbg to-transparent"></div>
                                 <div class="absolute bottom-4 left-4 right-4 text-center">
-                                    <h3 class="text-xl font-black text-white mb-2">Solo Leveling</h3>
-                                    <div class="bg-white text-black text-xs font-bold py-2 px-4 rounded-md inline-block">▶ Assistir Agora</div>
+                                    <h3 class="text-xl font-black text-white mb-2 drop-shadow-md">Frieren</h3>
+                                    <div class="bg-white text-black text-xs font-bold py-2 px-4 rounded-md inline-block shadow-lg">▶ Assistir Agora</div>
                                 </div>
                             </div>
                             <!-- Conteudo App -->
                             <div class="p-4 flex-1">
                                 <h4 class="text-white text-sm font-bold mb-3">Continuar Assistindo</h4>
                                 <div class="flex gap-3 overflow-hidden">
-                                    <div class="w-32 h-20 bg-slate-800 rounded-lg flex-shrink-0 relative overflow-hidden">
+                                    <div class="w-32 h-20 bg-slate-800 rounded-lg flex-shrink-0 relative overflow-hidden bg-[url('https://image.tmdb.org/t/p/original/kJVYs2p9SlU6YRZ7pJ0fE5mog2S.jpg')] bg-cover bg-center opacity-80">
                                         <div class="absolute bottom-0 left-0 h-1 bg-mango-brand w-2/3"></div>
                                     </div>
-                                    <div class="w-32 h-20 bg-slate-800 rounded-lg flex-shrink-0 relative"></div>
+                                    <div class="w-32 h-20 bg-slate-800 rounded-lg flex-shrink-0 relative bg-[url('https://image.tmdb.org/t/p/original/kUYCWZKjJHgvv5ZvC30x5wcbyj8.jpg')] bg-cover bg-center opacity-80"></div>
                                 </div>
                                 <h4 class="text-white text-sm font-bold mt-6 mb-3">Lançamentos</h4>
                                 <div class="flex gap-3 overflow-hidden">
-                                    <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0"></div>
-                                    <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0"></div>
+                                    <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0 bg-[url('https://image.tmdb.org/t/p/original/jlbUx0aHJupDVDlCo0R7UxSaUUd.jpg')] bg-cover bg-center opacity-80"></div>
+                                    <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0 bg-[url('https://image.tmdb.org/t/p/original/zAfK8cVjJiYUsVLDkHoIgxJh319.jpg')] bg-cover bg-center opacity-80"></div>
                                     <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0"></div>
                                 </div>
                             </div>
                             <!-- Bottom Nav App -->
-                            <div class="h-14 bg-[#0a0f1c] border-t border-slate-800 flex justify-around items-center px-4">
-                                <div class="w-6 h-6 rounded bg-mango-brand/20"></div>
-                                <div class="w-6 h-6 rounded bg-slate-800"></div>
-                                <div class="w-6 h-6 rounded bg-slate-800"></div>
-                                <div class="w-6 h-6 rounded-full bg-slate-800"></div>
+                            <div class="h-14 bg-[#0a0f1c] border-t border-slate-800 flex justify-around items-center px-4 z-20">
+                                <div class="w-6 h-6 rounded bg-mango-brand"></div>
+                                <div class="w-6 h-6 rounded bg-slate-700"></div>
+                                <div class="w-6 h-6 rounded bg-slate-700"></div>
+                                <div class="w-6 h-6 rounded-full bg-slate-700"></div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Elementos flutuantes atrás do celular -->
-                    <div class="absolute top-20 -left-10 w-24 h-24 bg-mango-brand/20 rounded-full blur-2xl"></div>
-                    <div class="absolute bottom-20 -right-10 w-32 h-32 bg-purple-600/20 rounded-full blur-2xl"></div>
+                    <div class="absolute top-20 -left-10 w-24 h-24 bg-mango-brand/20 rounded-full blur-2xl hidden md:block"></div>
+                    <div class="absolute bottom-20 -right-10 w-32 h-32 bg-purple-600/20 rounded-full blur-2xl hidden md:block"></div>
                 </div>
             </div>
         </div>

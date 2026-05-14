@@ -210,7 +210,7 @@
                 <!-- BOTÃO FLUTUANTE -->
                 <div class="fixed bottom-8 max-w-3xl w-full pr-8 z-10">
                     <button type="submit" id="submitBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-2xl shadow-xl shadow-red-600/20 transition duration-200 flex justify-center items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">Publicar no Aplicativo</span>
+                        <i id="submitIcon" class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">Publicar no Aplicativo</span>
                     </button>
                 </div>
             </form>
@@ -431,14 +431,20 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>'; btn.disabled = true;
-            try { await signInWithEmailAndPassword(auth, document.getElementById('adminEmail').value, document.getElementById('adminPassword').value); } 
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Entrando...'; 
+            btn.disabled = true;
+            try { 
+                await signInWithEmailAndPassword(auth, document.getElementById('adminEmail').value, document.getElementById('adminPassword').value); 
+            } 
             catch (error) { Swal.fire('Erro', 'E-mail ou senha incorretos.', 'error'); } 
-            finally { btn.innerHTML = 'Entrar'; btn.disabled = false; }
+            finally { btn.innerHTML = originalHtml; btn.disabled = false; }
         });
+        
         document.getElementById('googleLoginBtn').addEventListener('click', async () => {
             try { await signInWithPopup(auth, googleProvider); } catch (error) { console.log(error); }
         });
+        
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
         // ENQUETES E LIVE PREVIEW
@@ -616,7 +622,8 @@
             // Altera UI para Modo Edição
             document.getElementById('editAlert').classList.remove('hidden-panel');
             document.getElementById('formTitle').textContent = "Atualizar Publicação";
-            document.getElementById('submitBtnText').textContent = "Salvar Alterações";
+            const btnText = document.getElementById('submitBtnText');
+            if(btnText) btnText.textContent = "Salvar Alterações";
             
             switchTab('mainContent');
             updateLivePreview();
@@ -633,7 +640,11 @@
             
             document.getElementById('editAlert').classList.add('hidden-panel');
             document.getElementById('formTitle').textContent = "Criar Publicação na Guilda";
-            document.getElementById('submitBtnText').textContent = "Publicar no Aplicativo";
+            
+            // Corrige o bug do botão de envio de texto desaparecendo
+            const btnText = document.getElementById('submitBtnText');
+            if(btnText) btnText.textContent = "Publicar no Aplicativo";
+            
             updateLivePreview();
         };
 
@@ -653,8 +664,18 @@
             if(!profileId) { Swal.fire('Erro', 'Selecione um perfil!', 'warning'); return; }
 
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Salvando...';
+            const submitIcon = document.getElementById('submitIcon');
+            const submitText = document.getElementById('submitBtnText');
+            
+            // Altera apenas classes/texto do ícone e span sem destruir a tag (Correção do Bug)
             btn.disabled = true;
+            if (submitIcon) {
+                submitIcon.classList.remove('fa-paper-plane');
+                submitIcon.classList.add('fa-circle-notch', 'fa-spin');
+            }
+            if (submitText) {
+                submitText.textContent = 'Salvando...';
+            }
 
             try {
                 const pollInputs = document.querySelectorAll('.poll-input');
@@ -717,8 +738,14 @@
                 console.error(error);
                 Swal.fire({ title: 'Erro!', text: error.message, icon: 'error', background: '#18181b', color: '#fff' });
             } finally {
-                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">${window.editingPostData ? 'Salvar Alterações' : 'Publicar no Aplicativo'}</span>`;
                 btn.disabled = false;
+                if (submitIcon) {
+                    submitIcon.classList.remove('fa-circle-notch', 'fa-spin');
+                    submitIcon.classList.add('fa-paper-plane');
+                }
+                if (submitText) {
+                    submitText.textContent = window.editingPostData ? 'Salvar Alterações' : 'Publicar no Aplicativo';
+                }
             }
         });
     </script>

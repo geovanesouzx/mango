@@ -1,363 +1,601 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="scroll-smooth">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mango - O Seu Novo Mundo de Animes</title>
+    <title>Mango Studio - Painel PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        mango: {
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                            600: '#d97706',
-                            brand: '#FF7A00' // Cor oficial do app
-                        },
-                        appbg: '#0a0f1c',
-                        appcard: '#151c2c'
-                    }
-                }
-            }
-        }
-    </script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body { background-color: #0a0f1c; color: #f8fafc; overflow-x: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { background-color: #09090b; color: #ffffff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         
-        .glass-nav {
-            background: rgba(10, 15, 28, 0.7);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .hero-glow {
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(255, 122, 0, 0.15) 0%, rgba(0,0,0,0) 70%);
-            top: -200px;
-            right: -100px;
-            z-index: -1;
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .mockup-container {
-            position: relative;
-            transform: perspective(1000px) rotateY(-15deg) rotateX(5deg);
-            transition: transform 0.5s ease;
-        }
+        /* Estilos de inputs */
+        .mango-input { background-color: #18181b !important; border: 1px solid #27272a !important; color: white !important; transition: all 0.2s; }
+        .mango-input:focus { border-color: #e50914 !important; outline: none; box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2); }
         
-        .mockup-container:hover {
-            transform: perspective(1000px) rotateY(-5deg) rotateX(2deg);
-        }
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-        /* Desativa o efeito 3D em telas muito pequenas para melhor visualização */
-        @media (max-width: 640px) {
-            .mockup-container {
-                transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
-            }
-            .mockup-container:hover {
-                transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
-            }
+        /* Estilos do Simulador de Celular */
+        .phone-mockup {
+            width: 320px; height: 650px; background: #000; border: 12px solid #18181b; 
+            border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-
-        .gradient-text {
-            background: linear-gradient(to right, #fbbf24, #FF7A00);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .phone-notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 25px; background: #18181b; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; z-index: 20;
         }
-
-        /* Animações de entrada */
-        .fade-in-up {
-            animation: fadeInUp 0.8s ease-out forwards;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
-
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        .feed-card { background: #141414; border-radius: 16px; padding: 16px; margin: 12px; margin-top: 40px;}
+        
+        .hidden-panel { display: none !important; }
+        .loader { border-top-color: #e50914; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="antialiased">
+<body class="flex min-h-screen">
 
-    <!-- Navegação -->
-    <nav class="fixed w-full z-50 glass-nav transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <!-- Logo -->
-                <div class="flex items-center gap-2 md:gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <img src="https://files.catbox.moe/b97doa.png" alt="Mango Logo" class="w-8 h-8 md:w-10 md:h-10 object-contain drop-shadow-[0_0_8px_rgba(255,122,0,0.5)]">
-                    <span class="text-xl md:text-2xl font-black text-white tracking-tight">Mango</span>
-                </div>
-
-                <!-- Links / CTA Responsivo -->
-                <div class="flex items-center gap-4">
-                    <div class="hidden md:flex items-center gap-8">
-                        <a href="#features" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Recursos</a>
-                        <a href="#community" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Comunidade</a>
-                    </div>
-                    <a href="https://www.mediafire.com/file/gvuporcsdh5fq7m/mango_v4.0.1.apk/file" target="_blank" class="bg-white text-black px-4 py-2 md:px-6 md:py-2.5 rounded-full font-bold text-xs md:text-sm hover:bg-slate-200 transition-transform hover:scale-105">
-                        Baixar Grátis
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Seção Hero (Principal) -->
-    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden min-h-screen flex items-center">
-        <div class="hero-glow"></div>
-        <div class="hero-glow" style="top: auto; bottom: -200px; left: -200px; background: radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, rgba(0,0,0,0) 70%);"></div>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-                
-                <!-- Textos Hero -->
-                <div class="max-w-2xl text-center lg:text-left">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mango-brand/10 border border-mango-brand/20 text-mango-brand text-xs font-bold uppercase tracking-wider mb-6 fade-in-up">
-                        <span class="w-2 h-2 rounded-full bg-mango-brand animate-pulse"></span>
-                        Versão 4.0 Disponível
-                    </div>
-                    <h1 class="text-4xl sm:text-5xl lg:text-7xl font-black text-white leading-[1.1] mb-6 fade-in-up delay-100">
-                        O seu universo <br>
-                        <span class="gradient-text">favorito</span> em um só lugar.
-                    </h1>
-                    <p class="text-base sm:text-lg text-slate-400 mb-8 fade-in-up delay-200 leading-relaxed max-w-lg mx-auto lg:mx-0">
-                        Assista aos melhores animes e séries com qualidade impecável. Crie seu perfil, faça pedidos diretos à moderação e continue exatamente de onde parou.
-                    </p>
-                    
-                    <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 fade-in-up delay-300">
-                        <a href="https://www.mediafire.com/file/gvuporcsdh5fq7m/mango_v4.0.1.apk/file" target="_blank" class="flex items-center justify-center gap-2 bg-mango-brand text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-orange-600 transition-all hover:-translate-y-1 shadow-lg shadow-mango-brand/25">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Baixar para Android
-                        </a>
-                        <a href="#features" class="flex items-center justify-center gap-2 bg-appcard border border-slate-800 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-800 transition-all">
-                            Conhecer Recursos
-                        </a>
-                    </div>
-                    
-                    <div class="mt-8 flex justify-center lg:justify-start items-center gap-4 text-sm text-slate-500 fade-in-up delay-300">
-                        <div class="flex -space-x-2">
-                            <img class="w-8 h-8 rounded-full border-2 border-appbg" src="https://i.pravatar.cc/100?img=1" alt="User">
-                            <img class="w-8 h-8 rounded-full border-2 border-appbg" src="https://i.pravatar.cc/100?img=2" alt="User">
-                            <img class="w-8 h-8 rounded-full border-2 border-appbg" src="https://i.pravatar.cc/100?img=3" alt="User">
-                            <div class="w-8 h-8 rounded-full border-2 border-appbg bg-slate-800 flex items-center justify-center text-xs font-bold text-white">+5k</div>
-                        </div>
-                        <p>Junte-se à comunidade otaku.</p>
-                    </div>
-                </div>
-
-                <!-- Mockup App (Visual) -->
-                <div class="relative lg:h-[600px] flex justify-center items-center fade-in-up delay-200 mt-12 lg:mt-0 scale-90 sm:scale-100">
-                    <!-- Celular Falso feito em CSS -->
-                    <div class="mockup-container w-[280px] h-[580px] bg-black rounded-[40px] border-[8px] border-slate-800 shadow-2xl overflow-hidden relative z-10 flex flex-col">
-                        <!-- Top Notch -->
-                        <div class="absolute top-0 inset-x-0 h-6 flex justify-center z-50">
-                            <div class="w-32 h-6 bg-slate-800 rounded-b-2xl"></div>
-                        </div>
-                        
-                        <!-- App UI Fake -->
-                        <div class="flex-1 bg-appbg overflow-hidden flex flex-col">
-                            <!-- Hero App -->
-                            <div class="h-[45%] relative bg-gradient-to-b from-slate-800 to-appbg">
-                                <div class="absolute inset-0 bg-[url('https://image.tmdb.org/t/p/original/rBOnrVlck7BIlGeWVlzYiZeg4l2.jpg')] bg-cover bg-center opacity-70"></div>
-                                <div class="absolute inset-0 bg-gradient-to-t from-appbg to-transparent"></div>
-                                <div class="absolute bottom-4 left-4 right-4 text-center">
-                                    <h3 class="text-xl font-black text-white mb-2 drop-shadow-md">Frieren</h3>
-                                    <div class="bg-white text-black text-xs font-bold py-2 px-4 rounded-md inline-block shadow-lg">▶ Assistir Agora</div>
-                                </div>
-                            </div>
-                            <!-- Conteudo App -->
-                            <div class="p-4 flex-1">
-                                <h4 class="text-white text-sm font-bold mb-3">Continuar Assistindo</h4>
-                                <div class="flex gap-3 overflow-hidden">
-                                    <div class="w-32 h-20 bg-slate-800 rounded-lg flex-shrink-0 relative overflow-hidden bg-[url('https://image.tmdb.org/t/p/original/kJVYs2p9SlU6YRZ7pJ0fE5mog2S.jpg')] bg-cover bg-center opacity-80">
-                                        <div class="absolute bottom-0 left-0 h-1 bg-mango-brand w-2/3"></div>
-                                    </div>
-                                    <div class="w-32 h-20 bg-slate-800 rounded-lg flex-shrink-0 relative bg-[url('https://image.tmdb.org/t/p/original/kUYCWZKjJHgvv5ZvC30x5wcbyj8.jpg')] bg-cover bg-center opacity-80"></div>
-                                </div>
-                                <h4 class="text-white text-sm font-bold mt-6 mb-3">Lançamentos</h4>
-                                <div class="flex gap-3 overflow-hidden">
-                                    <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0 bg-[url('https://image.tmdb.org/t/p/original/jlbUx0aHJupDVDlCo0R7UxSaUUd.jpg')] bg-cover bg-center opacity-80"></div>
-                                    <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0 bg-[url('https://image.tmdb.org/t/p/original/zAfK8cVjJiYUsVLDkHoIgxJh319.jpg')] bg-cover bg-center opacity-80"></div>
-                                    <div class="w-20 h-28 bg-slate-800 rounded-lg flex-shrink-0"></div>
-                                </div>
-                            </div>
-                            <!-- Bottom Nav App -->
-                            <div class="h-14 bg-[#0a0f1c] border-t border-slate-800 flex justify-around items-center px-4 z-20">
-                                <div class="w-6 h-6 rounded bg-mango-brand"></div>
-                                <div class="w-6 h-6 rounded bg-slate-700"></div>
-                                <div class="w-6 h-6 rounded bg-slate-700"></div>
-                                <div class="w-6 h-6 rounded-full bg-slate-700"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Elementos flutuantes atrás do celular -->
-                    <div class="absolute top-20 -left-10 w-24 h-24 bg-mango-brand/20 rounded-full blur-2xl hidden md:block"></div>
-                    <div class="absolute bottom-20 -right-10 w-32 h-32 bg-purple-600/20 rounded-full blur-2xl hidden md:block"></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Seção de Recursos -->
-    <section id="features" class="py-20 bg-[#0d1322]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Tudo o que você precisa. E um pouco mais.</h2>
-                <p class="text-slate-400">O Mango foi construído pensando na melhor experiência de usuário. Sem engasgos, sem complicação.</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="bg-appcard border border-slate-800 p-8 rounded-2xl hover:border-mango-500/50 transition-colors group">
-                    <div class="w-14 h-14 bg-mango-brand/10 rounded-xl flex items-center justify-center text-mango-brand mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Player Premium</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Player customizado estilo Netflix. Controle de velocidade, ajuste de tela, seleção de áudio (Dublado/Legendado) e avanço rápido. Compatível com PiP (Miniplayer).
-                    </p>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="bg-appcard border border-slate-800 p-8 rounded-2xl hover:border-indigo-500/50 transition-colors group">
-                    <div class="w-14 h-14 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Perfis Múltiplos</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Divida a conta com amigos! Crie perfis separados, cada um com seu próprio histórico, lista de favoritos, avatares personalizados e proteção por PIN.
-                    </p>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="bg-appcard border border-slate-800 p-8 rounded-2xl hover:border-emerald-500/50 transition-colors group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-emerald-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg">NOVO</div>
-                    <div class="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Central de Pedidos</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Faltou algum episódio? Peça direto pelo app! Busque no banco de dados global (TMDB), selecione os episódios que faltam e vote nos pedidos de outros usuários.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Showcase / Detalhes Visuais -->
-    <section id="community" class="py-20 relative overflow-hidden border-y border-slate-800/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col lg:flex-row items-center gap-16">
-                
-                <div class="w-full lg:w-1/2">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-4 pt-12">
-                            <img src="https://image.tmdb.org/t/p/original/kJVYs2p9SlU6YRZ7pJ0fE5mog2S.jpg" class="rounded-2xl shadow-lg border border-slate-700 h-40 w-full object-cover hover:scale-[1.02] transition-transform cursor-pointer" alt="Anime Art 1">
-                            <img src="https://image.tmdb.org/t/p/original/jlbUx0aHJupDVDlCo0R7UxSaUUd.jpg" class="rounded-2xl shadow-lg border border-slate-700 h-64 w-full object-cover hover:scale-[1.02] transition-transform cursor-pointer" alt="Anime Art 2">
-                            <div class="bg-appcard p-6 rounded-2xl border border-slate-800 text-center shadow-lg">
-                                <p class="text-4xl font-black text-mango-brand">+1000</p>
-                                <p class="text-xs text-slate-400 uppercase tracking-widest mt-2 font-bold">Obras Disponíveis</p>
-                            </div>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="bg-gradient-to-br from-indigo-900 to-appcard p-6 rounded-2xl border border-indigo-500/30 shadow-lg">
-                                <h4 class="text-white font-bold mb-2">Comunidade Ativa</h4>
-                                <p class="text-sm text-indigo-200">Pedidos atendidos diariamente baseados em votos reais.</p>
-                            </div>
-                            <img src="https://image.tmdb.org/t/p/original/kUYCWZKjJHgvv5ZvC30x5wcbyj8.jpg" class="rounded-2xl shadow-lg border border-slate-700 h-48 w-full object-cover hover:scale-[1.02] transition-transform cursor-pointer" alt="Anime Art 3">
-                            <img src="https://image.tmdb.org/t/p/original/rBOnrVlck7BIlGeWVlzYiZeg4l2.jpg" class="rounded-2xl shadow-lg border border-slate-700 h-32 w-full object-cover hover:scale-[1.02] transition-transform cursor-pointer" alt="Anime Art 4">
-                            <img src="https://image.tmdb.org/t/p/original/zAfK8cVjJiYUsVLDkHoIgxJh319.jpg" class="rounded-2xl shadow-lg border border-slate-700 h-40 w-full object-cover hover:scale-[1.02] transition-transform cursor-pointer" alt="Anime Art 5">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="w-full lg:w-1/2">
-                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Feito por fãs. <br>Para fãs.</h2>
-                    <p class="text-slate-400 text-lg mb-6 leading-relaxed">
-                        Cansado de apps cheios de anúncios invasivos e players que travam? O Mango Studio nasceu da vontade de criar a plataforma de streaming definitiva para o público otaku e cinéfilo.
-                    </p>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-sm">✓</div>
-                            Interface limpa e sem pop-ups chatos.
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-sm">✓</div>
-                            Categorias geradas por Inteligência Artificial.
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-sm">✓</div>
-                            Atualizações constantes via nuvem (Firebase).
-                        </li>
-                    </ul>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Download CTA -->
-    <section id="download" class="py-24 relative">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <h2 class="text-4xl md:text-5xl font-black text-white mb-6">Pronto para a maratona?</h2>
-            <p class="text-xl text-slate-400 mb-10">Baixe o APK oficial agora e comece a assistir em minutos. É 100% gratuito.</p>
+    <!-- ========================================== -->
+    <!-- TELA DE LOGIN (COM GOOGLE) -->
+    <!-- ========================================== -->
+    <div id="loginSection" class="fixed inset-0 z-50 flex items-center justify-center bg-[#09090b]">
+        <div class="w-full max-w-md bg-[#18181b] p-8 rounded-3xl border border-[#27272a] shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-900"></div>
             
-            <a href="https://www.mediafire.com/file/gvuporcsdh5fq7m/mango_v4.0.1.apk/file" target="_blank" class="inline-flex items-center justify-center gap-3 bg-white text-black px-10 py-5 rounded-full font-bold text-xl hover:bg-slate-200 transition-all hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.3414c-.011-.6438.271-1.2673.7656-1.6917.4947-.4245 1.15-.6236 1.785-.5425.2635-.9165.4124-1.8596.443-2.8093-1.0406.4952-2.2592.5195-3.3155.0661-1.0563-.4535-1.849-1.4233-2.156-2.5407-.307-1.1174-.0836-2.3105.6074-3.2452.691-.9348 1.7774-1.4883 2.955-1.5057-.5913-.8085-1.2825-1.5422-2.057-2.183-1.1396.9536-2.6105 1.4552-4.103 1.3984-1.4925-.0568-2.923-.6682-3.99-1.7058-1.0672-1.0375-1.7018-2.4578-1.7706-3.9622C6.619 1.1098 5.15 1.7454 3.904 2.651c.642.9248.966 2.0305.922 3.1492-.044 1.1187-.4538 2.1906-1.168 3.053-.714 .8624-1.724 1.428-2.876 1.6112-.6692 2.684.1832 5.5186 2.1884 7.2796 2.0051 1.761 4.8082 2.1953 7.1996 1.1154 1.2588 1.129 2.8715 1.7583 4.551 1.7752 1.6796.0168 3.303-.58 4.581-1.685.228-.6873.3446-1.4055.347-2.1287-1.018.42-2.164.288-3.003-.346-.838-.634-1.285-1.66-1.171-2.686 0-.0004 0-.0004 0 0z"/></svg>
-                Baixar Mango v4.0.1
+            <div class="text-center mb-8 mt-4">
+                <div class="w-20 h-20 bg-red-600/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                    <i class="fa-solid fa-satellite-dish text-red-500 text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Mango Studio</h1>
+                <p class="text-zinc-400 mt-2 text-sm">Acesse com a sua conta do aplicativo</p>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Botão de Login com Google -->
+                <button id="googleLoginBtn" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-900 font-semibold py-3.5 px-6 rounded-xl transition duration-200">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Continuar com o Google
+                </button>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-zinc-800"></div>
+                    <span class="flex-shrink-0 mx-4 text-zinc-500 text-xs">OU E-MAIL E SENHA</span>
+                    <div class="flex-grow border-t border-zinc-800"></div>
+                </div>
+
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <input type="email" id="adminEmail" required class="mango-input w-full px-4 py-3 rounded-xl text-sm" placeholder="Seu e-mail de admin">
+                    </div>
+                    <div>
+                        <input type="password" id="adminPassword" required class="mango-input w-full px-4 py-3 rounded-xl text-sm" placeholder="Sua senha">
+                    </div>
+                    <button type="submit" id="loginBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-red-600/20 transition duration-200">
+                        Entrar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SIDEBAR (MENU LATERAL) -->
+    <!-- ========================================== -->
+    <aside id="sidebar" class="w-64 bg-[#141414] border-r border-[#27272a] hidden-panel flex-col h-screen fixed left-0 top-0">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
+                <i class="fa-solid fa-play text-white"></i>
+            </div>
+            <span class="font-bold text-xl tracking-tight">Mango<span class="text-red-600">PRO</span></span>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a href="#" class="flex items-center gap-3 bg-red-600/10 text-red-500 px-4 py-3 rounded-xl font-medium border border-red-500/20 transition">
+                <i class="fa-solid fa-pen-to-square w-5"></i> Nova Postagem
             </a>
-            <p class="text-sm text-slate-500 mt-6">Apenas para dispositivos Android (APK).</p>
+            <a href="#" class="flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium transition" onclick="Swal.fire('Em breve', 'Histórico de posts na próxima atualização', 'info')">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i> Histórico
+            </a>
+            <a href="#" class="flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium transition" onclick="Swal.fire('Em breve', 'Notificações push em breve', 'info')">
+                <i class="fa-solid fa-bell w-5"></i> Notificações Push
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-[#27272a]">
+            <!-- Perfil logado exibido aqui -->
+            <div class="flex items-center gap-3 mb-4 px-2">
+                <img id="loggedUserAvatar" src="https://ui-avatars.com/api/?name=Admin&background=random" class="w-10 h-10 rounded-full border border-zinc-700 object-cover">
+                <div class="flex-1 min-w-0">
+                    <p id="loggedUserName" class="text-sm font-semibold text-white truncate">Carregando...</p>
+                    <p id="loggedUserEmail" class="text-xs text-zinc-500 truncate">aguarde...</p>
+                </div>
+            </div>
+            <button id="logoutBtn" class="w-full flex items-center justify-center gap-2 bg-[#27272a] hover:bg-zinc-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition">
+                <i class="fa-solid fa-power-off"></i> Sair
+            </button>
         </div>
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- ÁREA PRINCIPAL -->
+    <!-- ========================================== -->
+    <main id="mainContent" class="flex-1 ml-64 p-8 hidden-panel flex gap-8">
         
-        <!-- Fundo decorativo -->
-        <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-5xl h-64 bg-mango-brand/10 blur-[100px] rounded-full pointer-events-none"></div>
-    </section>
+        <!-- COLUNA ESQUERDA: FORMULÁRIO -->
+        <div class="flex-1 max-w-3xl">
+            <header class="mb-8">
+                <h2 class="text-2xl font-bold text-white">Criar Publicação na Guilda</h2>
+                <p class="text-zinc-400 mt-1">Sua postagem será sincronizada na aba de Feed do aplicativo instantaneamente.</p>
+            </header>
 
-    <!-- Footer -->
-    <footer class="bg-[#050810] border-t border-slate-800/50 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-3 text-white font-bold text-xl">
-                <img src="https://files.catbox.moe/b97doa.png" alt="Mango Logo" class="w-8 h-8 object-contain">
-                Mango
-            </div>
-            <p class="text-slate-500 text-sm">© 2026 Mango Studio. Todos os direitos reservados.</p>
-            <div class="flex gap-4">
-                <a href="#" class="text-slate-500 hover:text-white transition-colors">Termos de Uso</a>
-                <a href="#" class="text-slate-500 hover:text-white transition-colors">Privacidade</a>
+            <form id="postForm" class="space-y-6 pb-20">
+                
+                <!-- SELETOR DE PERFIS REAIS DO BANCO -->
+                <div class="bg-[#141414] border border-[#27272a] p-6 rounded-2xl">
+                    <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">1. Postar como</h3>
+                    
+                    <div id="profilesLoading" class="text-sm text-zinc-500 flex items-center"><i class="fa-solid fa-circle-notch fa-spin mr-2 text-red-500"></i> Buscando seus perfis no app...</div>
+                    
+                    <div id="profilesSelector" class="hidden">
+                        <select id="profileDropdown" class="mango-input w-full px-4 py-3 rounded-xl text-sm font-medium">
+                            <option value="">Selecione um perfil...</option>
+                        </select>
+                        <p class="text-xs text-zinc-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Estamos puxando os perfis reais da sua conta Mango.</p>
+                    </div>
+
+                    <!-- Dados ocultos que serão preenchidos pelo JS e enviados pro banco -->
+                    <input type="hidden" id="authorName">
+                    <input type="hidden" id="authorUsername">
+                    <input type="hidden" id="authorAvatar">
+                    <input type="hidden" id="profileId">
+                    <input type="hidden" id="isVerified" value="false">
+                </div>
+
+                <!-- CONTEÚDO DA POSTAGEM -->
+                <div class="bg-[#141414] border border-[#27272a] p-6 rounded-2xl">
+                    <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">2. Conteúdo</h3>
+                    
+                    <div>
+                        <textarea id="postText" rows="4" class="mango-input w-full px-4 py-3 rounded-xl text-sm resize-none" placeholder="O que você tem a dizer aos otacus hoje?"></textarea>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-2">Anexar Mídia (URL)</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-link absolute left-4 top-3.5 text-zinc-500"></i>
+                                <input type="url" id="mediaUrl" class="mango-input w-full pl-10 pr-4 py-3 rounded-xl text-sm" placeholder="https://imagem-anime.jpg">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-2">Formato da Mídia</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-photo-film absolute left-4 top-3.5 text-zinc-500"></i>
+                                <select id="mediaType" class="mango-input w-full pl-10 pr-4 py-3 rounded-xl text-sm appearance-none">
+                                    <option value="">Apenas Texto</option>
+                                    <option value="IMAGE">Imagem (Card Completo)</option>
+                                    <option value="VIDEO">Vídeo (Com botão de Play)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ENQUETES -->
+                <div class="bg-[#141414] border border-[#27272a] p-6 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider">3. Enquete (Opcional)</h3>
+                        <button type="button" onclick="addPollOption()" class="text-red-500 hover:text-red-400 text-sm font-medium transition flex items-center">
+                            <i class="fa-solid fa-plus-circle mr-1"></i> Adicionar Opção
+                        </button>
+                    </div>
+                    
+                    <div id="pollContainer" class="space-y-3">
+                        <!-- Opções injetadas aqui -->
+                    </div>
+                    <div id="pollEmptyState" class="text-center py-6 border border-dashed border-[#27272a] rounded-xl">
+                        <i class="fa-solid fa-square-poll-horizontal text-3xl text-zinc-700 mb-2"></i>
+                        <p class="text-sm text-zinc-500">Sem enquetes ativas.</p>
+                    </div>
+                </div>
+
+                <!-- BOTÃO FLUTUANTE DE POSTAR -->
+                <div class="fixed bottom-8 max-w-3xl w-full pr-8">
+                    <button type="submit" id="submitBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-2xl shadow-xl shadow-red-600/20 transition duration-200 flex justify-center items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-paper-plane"></i> Publicar no Aplicativo
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- COLUNA DIREITA: LIVE PREVIEW (CELULAR) -->
+        <div class="w-[340px] hidden xl:block">
+            <div class="sticky top-8">
+                <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center"><i class="fa-solid fa-eye text-red-500 mr-2"></i> Live Preview</h3>
+                
+                <!-- Mockup do Celular -->
+                <div class="phone-mockup">
+                    <div class="phone-notch"></div>
+                    
+                    <!-- Topbar App -->
+                    <div class="pt-10 pb-4 px-4 flex items-center border-b border-[#27272a]">
+                        <i class="fa-solid fa-arrow-left text-white"></i>
+                        <span class="text-white font-bold text-lg mx-auto">Feed</span>
+                        <i class="fa-solid fa-rotate-right text-white"></i>
+                    </div>
+
+                    <!-- Conteúdo do Feed -->
+                    <div class="overflow-y-auto h-full pb-20">
+                        <div class="feed-card">
+                            
+                            <!-- Header do Card -->
+                            <div class="flex items-center mb-3">
+                                <img id="previewAvatar" src="https://ui-avatars.com/api/?name=?&background=333&color=fff" class="w-10 h-10 rounded-full object-cover">
+                                <div class="ml-3 flex-1 min-w-0">
+                                    <div class="flex items-center text-sm">
+                                        <span id="previewName" class="font-bold text-white truncate">Nome</span>
+                                        <i id="previewVerified" class="fa-solid fa-circle-check text-[#00C853] text-[10px] ml-1 hidden"></i>
+                                    </div>
+                                    <div class="flex items-center text-[10px] text-zinc-500 mt-0.5">
+                                        <span id="previewUsername">@username</span>
+                                        <span class="mx-1">•</span>
+                                        <span>agora</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Texto -->
+                            <p id="previewText" class="text-[#E2E2E2] text-[13px] leading-relaxed mb-3">Escreva algo para ver o preview aqui...</p>
+
+                            <!-- Mídia -->
+                            <div id="previewMediaContainer" class="relative w-full rounded-xl overflow-hidden bg-black mb-3 hidden">
+                                <img id="previewImage" src="" class="w-full object-cover max-h-[180px]">
+                                <div id="previewVideoIcon" class="absolute inset-0 flex items-center justify-center hidden">
+                                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                        <i class="fa-solid fa-play text-black ml-1"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enquete -->
+                            <div id="previewPollContainer" class="border border-[#27272a] rounded-xl p-3 mb-3 hidden space-y-2">
+                                <!-- Preenchido via JS -->
+                            </div>
+
+                            <!-- Footer Card -->
+                            <div class="flex items-center text-zinc-500 text-xs">
+                                <div class="flex items-center gap-1.5"><div class="w-5 h-5 bg-red-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-heart text-white text-[9px]"></i></div> 0</div>
+                                <div class="flex items-center gap-1.5 ml-4"><i class="fa-solid fa-envelope"></i> 0</div>
+                                <div class="flex items-center gap-1.5 ml-auto">👁️ 230</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </footer>
+    </main>
 
-    <!-- Script para Rolagem Suave -->
-    <script>
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
+    <!-- FIREBASE & LÓGICA DO APP -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+
+        // CREDENCIAIS DO SEU APP
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLGgSoNwLy_f6FRG3jHmlNJ5AIb9MC7fs",
+            authDomain: "mango-anime.firebaseapp.com",
+            projectId: "mango-anime",
+            storageBucket: "mango-anime.firebasestorage.app",
+            messagingSenderId: "269303739791",
+            appId: "1:269303739791:web:bee162ff744b83e41187fa"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        let userProfiles = []; // Guardará os perfis do usuário logado
+
+        // Elementos da UI
+        const loginSection = document.getElementById('loginSection');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        
+        // CONTROLE DE AUTENTICAÇÃO
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Sucesso no login
+                document.getElementById('loggedUserName').textContent = user.displayName || 'Admin';
+                document.getElementById('loggedUserEmail').textContent = user.email;
+                if(user.photoURL) document.getElementById('loggedUserAvatar').src = user.photoURL;
+
+                loginSection.classList.add('hidden-panel');
+                sidebar.classList.remove('hidden-panel');
+                sidebar.classList.add('flex');
+                mainContent.classList.remove('hidden-panel');
+                
+                await fetchUserProfiles(user.uid);
+            } else {
+                loginSection.classList.remove('hidden-panel');
+                sidebar.classList.add('hidden-panel');
+                sidebar.classList.remove('flex');
+                mainContent.classList.add('hidden-panel');
+            }
+        });
+
+        // FUNÇÃO: BUSCAR PERFIS DO BANCO DE DADOS
+        async function fetchUserProfiles(uid) {
+            const loading = document.getElementById('profilesLoading');
+            const selector = document.getElementById('profilesSelector');
+            const dropdown = document.getElementById('profileDropdown');
+            
+            loading.style.display = 'flex';
+            selector.style.display = 'none';
+            dropdown.innerHTML = '<option value="">Selecione um perfil...</option>';
+
+            try {
+                // Acessa a coleção de perfis do app baseada no UID do usuário logado
+                const querySnapshot = await getDocs(collection(db, "users", uid, "profiles"));
+                userProfiles = [];
+                
+                querySnapshot.forEach((doc) => {
+                    userProfiles.push({ id: doc.id, ...doc.data() });
                 });
+
+                if(userProfiles.length > 0) {
+                    userProfiles.forEach(prof => {
+                        const opt = document.createElement('option');
+                        opt.value = prof.id;
+                        opt.textContent = `${prof.name} (@${prof.username})`;
+                        dropdown.appendChild(opt);
+                    });
+                    
+                    // Auto-selecionar o primeiro
+                    dropdown.value = userProfiles[0].id;
+                    updateFormWithProfile(userProfiles[0]);
+                } else {
+                    Swal.fire('Aviso', 'Sua conta não possui perfis criados no aplicativo. Crie um lá primeiro ou use uma conta diferente.', 'warning');
+                }
+            } catch (error) {
+                console.error("Erro ao buscar perfis:", error);
+                Swal.fire('Erro', 'Não foi possível carregar os perfis. Tente novamente.', 'error');
+            } finally {
+                loading.style.display = 'none';
+                if(userProfiles.length > 0) selector.style.display = 'block';
+            }
+        }
+
+        // FUNÇÃO: ATUALIZAR FORMULÁRIO COM DADOS DO PERFIL SELECIONADO
+        document.getElementById('profileDropdown').addEventListener('change', (e) => {
+            const profId = e.target.value;
+            const prof = userProfiles.find(p => p.id === profId);
+            if(prof) updateFormWithProfile(prof);
+        });
+
+        function updateFormWithProfile(profile) {
+            // Preenche os hidden inputs
+            document.getElementById('profileId').value = profile.id;
+            document.getElementById('authorName').value = profile.name || 'Usuário';
+            document.getElementById('authorUsername').value = profile.username || 'user';
+            
+            const avatar = profile.avatarUrl || profile.avatar || profile.photoUrl || `https://ui-avatars.com/api/?name=${profile.name}`;
+            document.getElementById('authorAvatar').value = avatar;
+            
+            const isVerified = profile.isVerified === true;
+            document.getElementById('isVerified').value = isVerified;
+
+            // Atualiza o Live Preview
+            document.getElementById('previewName').textContent = profile.name || 'Usuário';
+            document.getElementById('previewUsername').textContent = `@${profile.username || 'user'}`;
+            document.getElementById('previewAvatar').src = avatar;
+            
+            const verBadge = document.getElementById('previewVerified');
+            if(isVerified) verBadge.classList.remove('hidden');
+            else verBadge.classList.add('hidden');
+        }
+
+        // LOGIN EMAIL/SENHA
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const pass = document.getElementById('adminPassword').value;
+            const btn = document.getElementById('loginBtn');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>'; btn.disabled = true;
+            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            catch (error) { Swal.fire('Erro', 'E-mail ou senha incorretos.', 'error'); } 
+            finally { btn.innerHTML = 'Entrar'; btn.disabled = false; }
+        });
+
+        // LOGIN GOOGLE (NOVO)
+        document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+            try { await signInWithPopup(auth, googleProvider); } 
+            catch (error) { Swal.fire('Erro', 'O login pelo Google falhou ou foi cancelado.', 'error'); }
+        });
+
+        // LOGOUT
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+        // ==========================================
+        // LÓGICA DO FORMULÁRIO & ENQUETES
+        // ==========================================
+        window.pollOptionCount = 0;
+        
+        window.addPollOption = function() {
+            if(window.pollOptionCount >= 4) { Swal.fire('Limite', 'Máximo de 4 opções.', 'info'); return; }
+            window.pollOptionCount++;
+            
+            document.getElementById('pollEmptyState').style.display = 'none';
+            const container = document.getElementById('pollContainer');
+            
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2';
+            div.id = `poll-opt-div-${window.pollOptionCount}`;
+            div.innerHTML = `
+                <div class="relative flex-grow">
+                    <i class="fa-solid fa-list-ul absolute left-4 top-3.5 text-zinc-500 text-xs"></i>
+                    <input type="text" class="poll-input mango-input w-full pl-9 pr-4 py-2.5 rounded-xl text-sm" placeholder="Opção ${window.pollOptionCount}" onkeyup="updateLivePreview()">
+                </div>
+                <button type="button" onclick="removePollOption('${div.id}')" class="bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-zinc-400 p-2.5 rounded-xl transition">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(div);
+            updateLivePreview();
+        };
+
+        window.removePollOption = function(id) {
+            document.getElementById(id).remove();
+            window.pollOptionCount--;
+            if(document.querySelectorAll('.poll-input').length === 0) {
+                document.getElementById('pollEmptyState').style.display = 'block';
+            }
+            updateLivePreview();
+        };
+
+        // ==========================================
+        // LIVE PREVIEW SYNC
+        // ==========================================
+        const postTextInput = document.getElementById('postText');
+        const mediaUrlInput = document.getElementById('mediaUrl');
+        const mediaTypeInput = document.getElementById('mediaType');
+
+        postTextInput.addEventListener('keyup', updateLivePreview);
+        mediaUrlInput.addEventListener('keyup', updateLivePreview);
+        mediaTypeInput.addEventListener('change', updateLivePreview);
+
+        function updateLivePreview() {
+            // Atualiza Texto
+            const textVal = postTextInput.value.trim();
+            document.getElementById('previewText').textContent = textVal || 'Escreva algo para ver o preview aqui...';
+            document.getElementById('previewText').style.display = textVal ? 'block' : 'none';
+
+            // Atualiza Mídia
+            const mUrl = mediaUrlInput.value.trim();
+            const mType = mediaTypeInput.value;
+            const pMediaContainer = document.getElementById('previewMediaContainer');
+            const pImage = document.getElementById('previewImage');
+            const pVideoIcon = document.getElementById('previewVideoIcon');
+
+            if(mUrl !== '' && mType !== '') {
+                pMediaContainer.classList.remove('hidden');
+                pImage.src = mUrl;
+                if(mType === 'VIDEO') { pVideoIcon.classList.remove('hidden'); pImage.style.opacity = '0.6'; }
+                else { pVideoIcon.classList.add('hidden'); pImage.style.opacity = '1'; }
+            } else {
+                pMediaContainer.classList.add('hidden');
+            }
+
+            // Atualiza Enquete
+            const inputs = document.querySelectorAll('.poll-input');
+            const pPollContainer = document.getElementById('previewPollContainer');
+            pPollContainer.innerHTML = '';
+            
+            if(inputs.length > 0) {
+                pPollContainer.classList.remove('hidden');
+                inputs.forEach(input => {
+                    if(input.value.trim() !== '') {
+                        pPollContainer.innerHTML += `
+                            <div class="w-full bg-[#18181b] border border-[#27272a] rounded-lg p-2.5 text-xs text-white">
+                                ${input.value.trim()}
+                            </div>
+                        `;
+                    }
+                });
+            } else {
+                pPollContainer.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // ENVIO PARA O FIRESTORE
+        // ==========================================
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16);
             });
+        }
+
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const profileId = document.getElementById('profileId').value;
+            if(!profileId) { Swal.fire('Erro', 'Selecione um perfil para postar!', 'warning'); return; }
+
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Publicando...';
+            btn.disabled = true;
+
+            try {
+                // 1. Processar opções da enquete
+                const pollInputs = document.querySelectorAll('.poll-input');
+                let pollOptions = [];
+                pollInputs.forEach(input => {
+                    if(input.value.trim() !== '') {
+                        pollOptions.push({ id: generateUUID(), text: input.value.trim(), voters: [] });
+                    }
+                });
+
+                // 2. Mídia
+                const mUrl = document.getElementById('mediaUrl').value.trim();
+                let mType = document.getElementById('mediaType').value;
+                if(mUrl !== '' && mType === '') mType = 'IMAGE';
+                else if(mUrl === '') mType = '';
+
+                // 3. Texto
+                const pText = document.getElementById('postText').value.trim();
+
+                if(pText === '' && mUrl === '' && pollOptions.length === 0) {
+                    throw new Error("A postagem não pode ser vazia!");
+                }
+
+                // 4. Montar o Objeto igual à classe Kotlin
+                const postId = generateUUID();
+                const postData = {
+                    id: postId,
+                    uid: auth.currentUser.uid, 
+                    profileId: profileId, 
+                    authorName: document.getElementById('authorName').value,
+                    authorUsername: document.getElementById('authorUsername').value,
+                    authorAvatar: document.getElementById('authorAvatar').value,
+                    isAuthorVerified: document.getElementById('isVerified').value === 'true',
+                    text: pText,
+                    mediaUrl: mUrl,
+                    mediaType: mType,
+                    timestamp: Date.now(),
+                    likes: [],
+                    commentsCount: 0,
+                    viewsCount: 0,
+                    pollOptions: pollOptions
+                };
+
+                // 5. Enviar para a coleção guilda_posts (que os usuários podem ler)
+                await setDoc(doc(db, "guilda_posts", postId), postData);
+
+                Swal.fire({ title: 'Sucesso!', text: 'Guilda atualizada com a nova postagem.', icon: 'success', background: '#18181b', color: '#fff', confirmButtonColor: '#e50914' });
+                
+                // Limpar Form
+                document.getElementById('postText').value = '';
+                document.getElementById('mediaUrl').value = '';
+                document.getElementById('mediaType').value = '';
+                document.getElementById('pollContainer').innerHTML = '';
+                document.getElementById('pollEmptyState').style.display = 'block';
+                window.pollOptionCount = 0;
+                updateLivePreview();
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire({ title: 'Erro!', text: error.message, icon: 'error', background: '#18181b', color: '#fff' });
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Publicar no Aplicativo';
+                btn.disabled = false;
+            }
         });
     </script>
 </body>

@@ -33,11 +33,20 @@
         .feed-card { background: #141414; border-radius: 16px; padding: 16px; margin: 12px; margin-top: 40px;}
         
         .hidden-panel { display: none !important; }
+        .active-menu-item { background-color: rgba(229, 9, 20, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
         .loader { border-top-color: #e50914; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="flex min-h-screen">
+
+    <!-- ========================================== -->
+    <!-- LIGHTBOX (TELA CHEIA PARA FOTOS) -->
+    <!-- ========================================== -->
+    <div id="lightbox" class="fixed inset-0 z-[100] bg-black/95 hidden items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+        <button onclick="closeLightbox()" class="absolute top-6 right-6 text-white hover:text-red-500 text-4xl transition"><i class="fa-solid fa-xmark"></i></button>
+        <img id="lightboxImg" src="" class="max-w-[95%] max-h-[90vh] object-contain rounded-lg shadow-2xl">
+    </div>
 
     <!-- ========================================== -->
     <!-- TELA DE LOGIN (COM GOOGLE) -->
@@ -55,7 +64,6 @@
             </div>
 
             <div class="space-y-4">
-                <!-- Botão de Login com Google -->
                 <button id="googleLoginBtn" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-900 font-semibold py-3.5 px-6 rounded-xl transition duration-200">
                     <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                     Continuar com o Google
@@ -94,19 +102,15 @@
         </div>
 
         <nav class="flex-1 px-4 space-y-2 mt-4">
-            <a href="#" class="flex items-center gap-3 bg-red-600/10 text-red-500 px-4 py-3 rounded-xl font-medium border border-red-500/20 transition">
+            <a href="#" id="menuNewPost" onclick="switchTab('mainContent')" class="menu-btn active-menu-item flex items-center gap-3 px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-pen-to-square w-5"></i> Nova Postagem
             </a>
-            <a href="#" class="flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium transition" onclick="Swal.fire('Em breve', 'Histórico de posts na próxima atualização', 'info')">
+            <a href="#" id="menuHistory" onclick="switchTab('historyContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-clock-rotate-left w-5"></i> Histórico
-            </a>
-            <a href="#" class="flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium transition" onclick="Swal.fire('Em breve', 'Notificações push em breve', 'info')">
-                <i class="fa-solid fa-bell w-5"></i> Notificações Push
             </a>
         </nav>
 
         <div class="p-4 border-t border-[#27272a]">
-            <!-- Perfil logado exibido aqui -->
             <div class="flex items-center gap-3 mb-4 px-2">
                 <img id="loggedUserAvatar" src="https://ui-avatars.com/api/?name=Admin&background=random" class="w-10 h-10 rounded-full border border-zinc-700 object-cover">
                 <div class="flex-1 min-w-0">
@@ -121,20 +125,25 @@
     </aside>
 
     <!-- ========================================== -->
-    <!-- ÁREA PRINCIPAL -->
+    <!-- ÁREA 1: NOVA POSTAGEM / EDIÇÃO -->
     <!-- ========================================== -->
     <main id="mainContent" class="flex-1 ml-64 p-8 hidden-panel flex gap-8">
         
-        <!-- COLUNA ESQUERDA: FORMULÁRIO -->
-        <div class="flex-1 max-w-3xl">
+        <div class="flex-1 max-w-3xl relative">
+            <!-- Aviso flutuante de Edição -->
+            <div id="editAlert" class="hidden-panel bg-blue-500/20 border border-blue-500/50 text-blue-400 px-4 py-3 rounded-xl mb-6 flex justify-between items-center">
+                <span class="font-medium"><i class="fa-solid fa-pen mr-2"></i> Editando postagem antiga</span>
+                <button type="button" onclick="cancelEdit()" class="text-sm hover:text-white underline">Cancelar</button>
+            </div>
+
             <header class="mb-8">
-                <h2 class="text-2xl font-bold text-white">Criar Publicação na Guilda</h2>
+                <h2 id="formTitle" class="text-2xl font-bold text-white">Criar Publicação na Guilda</h2>
                 <p class="text-zinc-400 mt-1">Sua postagem será sincronizada na aba de Feed do aplicativo instantaneamente.</p>
             </header>
 
             <form id="postForm" class="space-y-6 pb-20">
                 
-                <!-- SELETOR DE PERFIS REAIS DO BANCO -->
+                <!-- SELETOR DE PERFIS -->
                 <div class="bg-[#141414] border border-[#27272a] p-6 rounded-2xl">
                     <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">1. Postar como</h3>
                     
@@ -144,10 +153,8 @@
                         <select id="profileDropdown" class="mango-input w-full px-4 py-3 rounded-xl text-sm font-medium">
                             <option value="">Selecione um perfil...</option>
                         </select>
-                        <p class="text-xs text-zinc-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Estamos puxando os perfis reais da sua conta Mango.</p>
                     </div>
 
-                    <!-- Dados ocultos que serão preenchidos pelo JS e enviados pro banco -->
                     <input type="hidden" id="authorName">
                     <input type="hidden" id="authorUsername">
                     <input type="hidden" id="authorAvatar">
@@ -155,10 +162,9 @@
                     <input type="hidden" id="isVerified" value="false">
                 </div>
 
-                <!-- CONTEÚDO DA POSTAGEM -->
+                <!-- CONTEÚDO -->
                 <div class="bg-[#141414] border border-[#27272a] p-6 rounded-2xl">
                     <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">2. Conteúdo</h3>
-                    
                     <div>
                         <textarea id="postText" rows="4" class="mango-input w-full px-4 py-3 rounded-xl text-sm resize-none" placeholder="O que você tem a dizer aos otacus hoje?"></textarea>
                     </div>
@@ -177,8 +183,8 @@
                                 <i class="fa-solid fa-photo-film absolute left-4 top-3.5 text-zinc-500"></i>
                                 <select id="mediaType" class="mango-input w-full pl-10 pr-4 py-3 rounded-xl text-sm appearance-none">
                                     <option value="">Apenas Texto</option>
-                                    <option value="IMAGE">Imagem (Card Completo)</option>
-                                    <option value="VIDEO">Vídeo (Com botão de Play)</option>
+                                    <option value="IMAGE">Imagem</option>
+                                    <option value="VIDEO">Vídeo (Thumbnail + Play)</option>
                                 </select>
                             </div>
                         </div>
@@ -194,19 +200,17 @@
                         </button>
                     </div>
                     
-                    <div id="pollContainer" class="space-y-3">
-                        <!-- Opções injetadas aqui -->
-                    </div>
+                    <div id="pollContainer" class="space-y-3"></div>
                     <div id="pollEmptyState" class="text-center py-6 border border-dashed border-[#27272a] rounded-xl">
                         <i class="fa-solid fa-square-poll-horizontal text-3xl text-zinc-700 mb-2"></i>
                         <p class="text-sm text-zinc-500">Sem enquetes ativas.</p>
                     </div>
                 </div>
 
-                <!-- BOTÃO FLUTUANTE DE POSTAR -->
-                <div class="fixed bottom-8 max-w-3xl w-full pr-8">
+                <!-- BOTÃO FLUTUANTE -->
+                <div class="fixed bottom-8 max-w-3xl w-full pr-8 z-10">
                     <button type="submit" id="submitBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-2xl shadow-xl shadow-red-600/20 transition duration-200 flex justify-center items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="fa-solid fa-paper-plane"></i> Publicar no Aplicativo
+                        <i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">Publicar no Aplicativo</span>
                     </button>
                 </div>
             </form>
@@ -217,22 +221,17 @@
             <div class="sticky top-8">
                 <h3 class="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center"><i class="fa-solid fa-eye text-red-500 mr-2"></i> Live Preview</h3>
                 
-                <!-- Mockup do Celular -->
                 <div class="phone-mockup">
                     <div class="phone-notch"></div>
                     
-                    <!-- Topbar App -->
                     <div class="pt-10 pb-4 px-4 flex items-center border-b border-[#27272a]">
                         <i class="fa-solid fa-arrow-left text-white"></i>
                         <span class="text-white font-bold text-lg mx-auto">Feed</span>
                         <i class="fa-solid fa-rotate-right text-white"></i>
                     </div>
 
-                    <!-- Conteúdo do Feed -->
                     <div class="overflow-y-auto h-full pb-20">
                         <div class="feed-card">
-                            
-                            <!-- Header do Card -->
                             <div class="flex items-center mb-3">
                                 <img id="previewAvatar" src="https://ui-avatars.com/api/?name=?&background=333&color=fff" class="w-10 h-10 rounded-full object-cover">
                                 <div class="ml-3 flex-1 min-w-0">
@@ -248,31 +247,25 @@
                                 </div>
                             </div>
 
-                            <!-- Texto -->
                             <p id="previewText" class="text-[#E2E2E2] text-[13px] leading-relaxed mb-3">Escreva algo para ver o preview aqui...</p>
 
-                            <!-- Mídia -->
-                            <div id="previewMediaContainer" class="relative w-full rounded-xl overflow-hidden bg-black mb-3 hidden">
-                                <img id="previewImage" src="" class="w-full object-cover max-h-[180px]">
-                                <div id="previewVideoIcon" class="absolute inset-0 flex items-center justify-center hidden">
+                            <!-- Mídia Preservando Proporções no Preview -->
+                            <div id="previewMediaContainer" class="relative w-full rounded-xl overflow-hidden bg-black mb-3 hidden cursor-pointer">
+                                <img id="previewImage" src="" class="w-full h-auto max-h-[250px] object-contain">
+                                <div id="previewVideoIcon" class="absolute inset-0 flex items-center justify-center hidden bg-black/30">
                                     <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
                                         <i class="fa-solid fa-play text-black ml-1"></i>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Enquete -->
-                            <div id="previewPollContainer" class="border border-[#27272a] rounded-xl p-3 mb-3 hidden space-y-2">
-                                <!-- Preenchido via JS -->
-                            </div>
+                            <div id="previewPollContainer" class="border border-[#27272a] rounded-xl p-3 mb-3 hidden space-y-2"></div>
 
-                            <!-- Footer Card -->
                             <div class="flex items-center text-zinc-500 text-xs">
                                 <div class="flex items-center gap-1.5"><div class="w-5 h-5 bg-red-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-heart text-white text-[9px]"></i></div> 0</div>
                                 <div class="flex items-center gap-1.5 ml-4"><i class="fa-solid fa-envelope"></i> 0</div>
                                 <div class="flex items-center gap-1.5 ml-auto">👁️ 230</div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -280,13 +273,37 @@
         </div>
     </main>
 
+    <!-- ========================================== -->
+    <!-- ÁREA 2: HISTÓRICO (GERENCIAMENTO) -->
+    <!-- ========================================== -->
+    <main id="historyContent" class="flex-1 ml-64 p-8 hidden-panel">
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Histórico de Postagens</h2>
+                <p class="text-zinc-400 mt-1">Gerencie, edite e apague publicações feitas na guilda.</p>
+            </div>
+            <button onclick="loadHistory()" class="bg-[#27272a] hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                <i class="fa-solid fa-rotate-right mr-2"></i>Recarregar
+            </button>
+        </header>
+
+        <!-- Grid de Cards do Histórico -->
+        <div id="historyFeed" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
+            <!-- Os cards são injetados aqui -->
+            <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i>
+                <p>Carregando postagens...</p>
+            </div>
+        </div>
+    </main>
+
     <!-- FIREBASE & LÓGICA DO APP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
-        // CREDENCIAIS DO SEU APP
+        // CREDENCIAIS
         const firebaseConfig = {
             apiKey: "AIzaSyDLGgSoNwLy_f6FRG3jHmlNJ5AIb9MC7fs",
             authDomain: "mango-anime.firebaseapp.com",
@@ -301,136 +318,135 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        let userProfiles = []; // Guardará os perfis do usuário logado
+        let userProfiles = [];
+        window.editingPostData = null; // Armazena a postagem que está sendo editada
+        window.allPostsCache = []; // Cache do histórico
 
-        // Elementos da UI
-        const loginSection = document.getElementById('loginSection');
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        
+        // Navegação de Abas
+        window.switchTab = function(tabId) {
+            document.getElementById('mainContent').classList.add('hidden-panel');
+            document.getElementById('historyContent').classList.add('hidden-panel');
+            
+            document.querySelectorAll('.menu-btn').forEach(btn => {
+                btn.classList.remove('active-menu-item', 'text-red-500');
+                btn.classList.add('text-zinc-400');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden-panel');
+            
+            if(tabId === 'mainContent') {
+                document.getElementById('menuNewPost').classList.add('active-menu-item');
+                document.getElementById('menuNewPost').classList.remove('text-zinc-400');
+            } else {
+                document.getElementById('menuHistory').classList.add('active-menu-item');
+                document.getElementById('menuHistory').classList.remove('text-zinc-400');
+                loadHistory();
+            }
+        };
+
+        // Lightbox
+        window.openLightbox = function(url) {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightboxImg');
+            img.src = url;
+            lb.classList.remove('hidden');
+            lb.style.display = 'flex';
+            setTimeout(() => lb.classList.remove('opacity-0'), 10);
+        };
+        window.closeLightbox = function() {
+            const lb = document.getElementById('lightbox');
+            lb.classList.add('opacity-0');
+            setTimeout(() => { lb.classList.add('hidden'); lb.style.display = 'none'; }, 300);
+        };
+
         // CONTROLE DE AUTENTICAÇÃO
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Sucesso no login
                 document.getElementById('loggedUserName').textContent = user.displayName || 'Admin';
                 document.getElementById('loggedUserEmail').textContent = user.email;
                 if(user.photoURL) document.getElementById('loggedUserAvatar').src = user.photoURL;
 
-                loginSection.classList.add('hidden-panel');
-                sidebar.classList.remove('hidden-panel');
-                sidebar.classList.add('flex');
-                mainContent.classList.remove('hidden-panel');
+                document.getElementById('loginSection').classList.add('hidden-panel');
+                document.getElementById('sidebar').classList.remove('hidden-panel');
+                document.getElementById('sidebar').classList.add('flex');
                 
+                switchTab('mainContent');
                 await fetchUserProfiles(user.uid);
             } else {
-                loginSection.classList.remove('hidden-panel');
-                sidebar.classList.add('hidden-panel');
-                sidebar.classList.remove('flex');
-                mainContent.classList.add('hidden-panel');
+                document.getElementById('loginSection').classList.remove('hidden-panel');
+                document.getElementById('sidebar').classList.add('hidden-panel');
+                document.getElementById('mainContent').classList.add('hidden-panel');
+                document.getElementById('historyContent').classList.add('hidden-panel');
             }
         });
 
-        // FUNÇÃO: BUSCAR PERFIS DO BANCO DE DADOS
+        // BUSCAR PERFIS
         async function fetchUserProfiles(uid) {
             const loading = document.getElementById('profilesLoading');
             const selector = document.getElementById('profilesSelector');
             const dropdown = document.getElementById('profileDropdown');
-            
-            loading.style.display = 'flex';
-            selector.style.display = 'none';
-            dropdown.innerHTML = '<option value="">Selecione um perfil...</option>';
-
+            loading.style.display = 'flex'; selector.style.display = 'none';
             try {
-                // Acessa a coleção de perfis do app baseada no UID do usuário logado
                 const querySnapshot = await getDocs(collection(db, "users", uid, "profiles"));
                 userProfiles = [];
-                
-                querySnapshot.forEach((doc) => {
-                    userProfiles.push({ id: doc.id, ...doc.data() });
-                });
+                querySnapshot.forEach((doc) => userProfiles.push({ id: doc.id, ...doc.data() }));
 
                 if(userProfiles.length > 0) {
+                    dropdown.innerHTML = '';
                     userProfiles.forEach(prof => {
                         const opt = document.createElement('option');
-                        opt.value = prof.id;
-                        opt.textContent = `${prof.name} (@${prof.username})`;
+                        opt.value = prof.id; opt.textContent = `${prof.name} (@${prof.username})`;
                         dropdown.appendChild(opt);
                     });
-                    
-                    // Auto-selecionar o primeiro
                     dropdown.value = userProfiles[0].id;
                     updateFormWithProfile(userProfiles[0]);
                 } else {
-                    Swal.fire('Aviso', 'Sua conta não possui perfis criados no aplicativo. Crie um lá primeiro ou use uma conta diferente.', 'warning');
+                    Swal.fire('Aviso', 'Sua conta não possui perfis. Crie um no aplicativo primeiro.', 'warning');
                 }
-            } catch (error) {
-                console.error("Erro ao buscar perfis:", error);
-                Swal.fire('Erro', 'Não foi possível carregar os perfis. Tente novamente.', 'error');
-            } finally {
-                loading.style.display = 'none';
-                if(userProfiles.length > 0) selector.style.display = 'block';
-            }
+            } catch (error) { console.error(error); } 
+            finally { loading.style.display = 'none'; if(userProfiles.length > 0) selector.style.display = 'block'; }
         }
 
-        // FUNÇÃO: ATUALIZAR FORMULÁRIO COM DADOS DO PERFIL SELECIONADO
         document.getElementById('profileDropdown').addEventListener('change', (e) => {
-            const profId = e.target.value;
-            const prof = userProfiles.find(p => p.id === profId);
+            const prof = userProfiles.find(p => p.id === e.target.value);
             if(prof) updateFormWithProfile(prof);
         });
 
         function updateFormWithProfile(profile) {
-            // Preenche os hidden inputs
             document.getElementById('profileId').value = profile.id;
             document.getElementById('authorName').value = profile.name || 'Usuário';
             document.getElementById('authorUsername').value = profile.username || 'user';
-            
             const avatar = profile.avatarUrl || profile.avatar || profile.photoUrl || `https://ui-avatars.com/api/?name=${profile.name}`;
             document.getElementById('authorAvatar').value = avatar;
-            
             const isVerified = profile.isVerified === true;
             document.getElementById('isVerified').value = isVerified;
 
-            // Atualiza o Live Preview
             document.getElementById('previewName').textContent = profile.name || 'Usuário';
             document.getElementById('previewUsername').textContent = `@${profile.username || 'user'}`;
             document.getElementById('previewAvatar').src = avatar;
-            
-            const verBadge = document.getElementById('previewVerified');
-            if(isVerified) verBadge.classList.remove('hidden');
-            else verBadge.classList.add('hidden');
+            document.getElementById('previewVerified').classList.toggle('hidden', !isVerified);
         }
 
-        // LOGIN EMAIL/SENHA
+        // LOGIN / LOGOUT
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('adminEmail').value;
-            const pass = document.getElementById('adminPassword').value;
             const btn = document.getElementById('loginBtn');
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>'; btn.disabled = true;
-            try { await signInWithEmailAndPassword(auth, email, pass); } 
+            try { await signInWithEmailAndPassword(auth, document.getElementById('adminEmail').value, document.getElementById('adminPassword').value); } 
             catch (error) { Swal.fire('Erro', 'E-mail ou senha incorretos.', 'error'); } 
             finally { btn.innerHTML = 'Entrar'; btn.disabled = false; }
         });
-
-        // LOGIN GOOGLE (NOVO)
         document.getElementById('googleLoginBtn').addEventListener('click', async () => {
-            try { await signInWithPopup(auth, googleProvider); } 
-            catch (error) { Swal.fire('Erro', 'O login pelo Google falhou ou foi cancelado.', 'error'); }
+            try { await signInWithPopup(auth, googleProvider); } catch (error) { console.log(error); }
         });
-
-        // LOGOUT
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
-        // ==========================================
-        // LÓGICA DO FORMULÁRIO & ENQUETES
-        // ==========================================
+        // ENQUETES E LIVE PREVIEW
         window.pollOptionCount = 0;
         
-        window.addPollOption = function() {
-            if(window.pollOptionCount >= 4) { Swal.fire('Limite', 'Máximo de 4 opções.', 'info'); return; }
+        window.addPollOption = function(initialText = '') {
+            if(window.pollOptionCount >= 4) return;
             window.pollOptionCount++;
-            
             document.getElementById('pollEmptyState').style.display = 'none';
             const container = document.getElementById('pollContainer');
             
@@ -440,7 +456,7 @@
             div.innerHTML = `
                 <div class="relative flex-grow">
                     <i class="fa-solid fa-list-ul absolute left-4 top-3.5 text-zinc-500 text-xs"></i>
-                    <input type="text" class="poll-input mango-input w-full pl-9 pr-4 py-2.5 rounded-xl text-sm" placeholder="Opção ${window.pollOptionCount}" onkeyup="updateLivePreview()">
+                    <input type="text" value="${initialText}" class="poll-input mango-input w-full pl-9 pr-4 py-2.5 rounded-xl text-sm" placeholder="Opção ${window.pollOptionCount}" onkeyup="updateLivePreview()">
                 </div>
                 <button type="button" onclick="removePollOption('${div.id}')" class="bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-zinc-400 p-2.5 rounded-xl transition">
                     <i class="fa-solid fa-trash"></i>
@@ -453,15 +469,10 @@
         window.removePollOption = function(id) {
             document.getElementById(id).remove();
             window.pollOptionCount--;
-            if(document.querySelectorAll('.poll-input').length === 0) {
-                document.getElementById('pollEmptyState').style.display = 'block';
-            }
+            if(document.querySelectorAll('.poll-input').length === 0) document.getElementById('pollEmptyState').style.display = 'block';
             updateLivePreview();
         };
 
-        // ==========================================
-        // LIVE PREVIEW SYNC
-        // ==========================================
         const postTextInput = document.getElementById('postText');
         const mediaUrlInput = document.getElementById('mediaUrl');
         const mediaTypeInput = document.getElementById('mediaType');
@@ -471,12 +482,9 @@
         mediaTypeInput.addEventListener('change', updateLivePreview);
 
         function updateLivePreview() {
-            // Atualiza Texto
             const textVal = postTextInput.value.trim();
             document.getElementById('previewText').textContent = textVal || 'Escreva algo para ver o preview aqui...';
-            document.getElementById('previewText').style.display = textVal ? 'block' : 'none';
-
-            // Atualiza Mídia
+            
             const mUrl = mediaUrlInput.value.trim();
             const mType = mediaTypeInput.value;
             const pMediaContainer = document.getElementById('previewMediaContainer');
@@ -486,13 +494,10 @@
             if(mUrl !== '' && mType !== '') {
                 pMediaContainer.classList.remove('hidden');
                 pImage.src = mUrl;
-                if(mType === 'VIDEO') { pVideoIcon.classList.remove('hidden'); pImage.style.opacity = '0.6'; }
-                else { pVideoIcon.classList.add('hidden'); pImage.style.opacity = '1'; }
-            } else {
-                pMediaContainer.classList.add('hidden');
-            }
+                if(mType === 'VIDEO') pVideoIcon.classList.remove('hidden');
+                else pVideoIcon.classList.add('hidden');
+            } else pMediaContainer.classList.add('hidden');
 
-            // Atualiza Enquete
             const inputs = document.querySelectorAll('.poll-input');
             const pPollContainer = document.getElementById('previewPollContainer');
             pPollContainer.innerHTML = '';
@@ -500,21 +505,140 @@
             if(inputs.length > 0) {
                 pPollContainer.classList.remove('hidden');
                 inputs.forEach(input => {
-                    if(input.value.trim() !== '') {
-                        pPollContainer.innerHTML += `
-                            <div class="w-full bg-[#18181b] border border-[#27272a] rounded-lg p-2.5 text-xs text-white">
-                                ${input.value.trim()}
-                            </div>
-                        `;
-                    }
+                    if(input.value.trim() !== '') pPollContainer.innerHTML += `<div class="w-full bg-[#18181b] border border-[#27272a] rounded-lg p-2.5 text-xs text-white">${input.value.trim()}</div>`;
                 });
-            } else {
-                pPollContainer.classList.add('hidden');
-            }
+            } else pPollContainer.classList.add('hidden');
         }
 
         // ==========================================
-        // ENVIO PARA O FIRESTORE
+        // CARREGAR E GERENCIAR HISTÓRICO
+        // ==========================================
+        window.loadHistory = async function() {
+            const container = document.getElementById('historyFeed');
+            container.innerHTML = '<div class="col-span-full flex flex-col items-center py-20 text-zinc-500"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i><p>Carregando postagens...</p></div>';
+            
+            try {
+                const q = query(collection(db, "guilda_posts"), orderBy("timestamp", "desc"));
+                const snap = await getDocs(q);
+                window.allPostsCache = [];
+                container.innerHTML = '';
+
+                if(snap.empty) {
+                    container.innerHTML = '<div class="col-span-full text-center py-20 text-zinc-500"><i class="fa-solid fa-ghost text-4xl mb-3"></i><p>Nenhuma postagem encontrada.</p></div>';
+                    return;
+                }
+
+                snap.forEach(doc => {
+                    const post = doc.data();
+                    window.allPostsCache.push(post);
+                    
+                    const date = new Date(post.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' });
+                    
+                    let mediaHTML = '';
+                    if(post.mediaUrl) {
+                        mediaHTML = `
+                        <div class="mt-3 relative w-full bg-black rounded-lg overflow-hidden cursor-pointer" onclick="openLightbox('${post.mediaUrl}')">
+                            <img src="${post.mediaUrl}" class="w-full h-auto max-h-[250px] object-contain ${post.mediaType === 'VIDEO' ? 'opacity-70' : ''}">
+                            ${post.mediaType === 'VIDEO' ? '<div class="absolute inset-0 flex items-center justify-center"><div class="w-10 h-10 bg-white rounded-full flex justify-center items-center"><i class="fa-solid fa-play text-black ml-1"></i></div></div>' : ''}
+                        </div>`;
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-[#141414] border border-[#27272a] rounded-2xl p-5 hover:border-zinc-700 transition flex flex-col">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center">
+                                    <img src="${post.authorAvatar}" class="w-10 h-10 rounded-full object-cover">
+                                    <div class="ml-3">
+                                        <p class="font-bold text-sm text-white">${post.authorName} <i class="${post.isAuthorVerified ? 'fa-solid fa-circle-check text-green-500' : 'hidden'} ml-1"></i></p>
+                                        <p class="text-xs text-zinc-500">${date}</p>
+                                    </div>
+                                </div>
+                                <!-- Ações Card -->
+                                <div class="flex gap-2">
+                                    <button onclick="editPost('${post.id}')" class="w-8 h-8 rounded-full bg-[#27272a] hover:bg-blue-600/20 hover:text-blue-400 text-zinc-400 flex items-center justify-center transition" title="Editar"><i class="fa-solid fa-pen text-xs"></i></button>
+                                    <button onclick="deletePost('${post.id}')" class="w-8 h-8 rounded-full bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-zinc-400 flex items-center justify-center transition" title="Excluir"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+                            <p class="text-sm text-[#E2E2E2] line-clamp-4">${post.text}</p>
+                            ${mediaHTML}
+                            <div class="mt-auto pt-4 flex gap-4 text-xs text-zinc-500 font-medium">
+                                <span><i class="fa-solid fa-heart mr-1"></i> ${post.likes ? post.likes.length : 0}</span>
+                                <span><i class="fa-solid fa-envelope mr-1"></i> ${post.commentsCount || 0}</span>
+                                <span><i class="fa-solid fa-square-poll-horizontal mr-1"></i> ${post.pollOptions ? post.pollOptions.length : 0} opç</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<div class="col-span-full text-center py-20 text-red-500">Erro ao buscar histórico.</div>';
+            }
+        };
+
+        // EXCLUIR POST
+        window.deletePost = async function(postId) {
+            const result = await Swal.fire({
+                title: 'Tem certeza?', text: "Esta postagem sumirá do aplicativo de todos.", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "guilda_posts", postId));
+                    Swal.fire({ title: 'Excluído!', text: 'Postagem apagada com sucesso.', icon: 'success', background: '#18181b', color: '#fff', timer: 1500 });
+                    loadHistory();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível excluir.', 'error'); }
+            }
+        };
+
+        // EDITAR POST (Carregar no formulário)
+        window.editPost = function(postId) {
+            const post = window.allPostsCache.find(p => p.id === postId);
+            if(!post) return;
+            
+            window.editingPostData = post;
+            
+            // Preenche Formulário
+            document.getElementById('postText').value = post.text || '';
+            document.getElementById('mediaUrl').value = post.mediaUrl || '';
+            document.getElementById('mediaType').value = post.mediaType || (post.mediaUrl ? 'IMAGE' : '');
+            
+            // Recria Enquete
+            document.getElementById('pollContainer').innerHTML = '';
+            window.pollOptionCount = 0;
+            if(post.pollOptions && post.pollOptions.length > 0) {
+                post.pollOptions.forEach(opt => addPollOption(opt.text));
+            } else {
+                document.getElementById('pollEmptyState').style.display = 'block';
+            }
+
+            // Altera UI para Modo Edição
+            document.getElementById('editAlert').classList.remove('hidden-panel');
+            document.getElementById('formTitle').textContent = "Atualizar Publicação";
+            document.getElementById('submitBtnText').textContent = "Salvar Alterações";
+            
+            switchTab('mainContent');
+            updateLivePreview();
+        };
+
+        window.cancelEdit = function() {
+            window.editingPostData = null;
+            document.getElementById('postText').value = '';
+            document.getElementById('mediaUrl').value = '';
+            document.getElementById('mediaType').value = '';
+            document.getElementById('pollContainer').innerHTML = '';
+            document.getElementById('pollEmptyState').style.display = 'block';
+            window.pollOptionCount = 0;
+            
+            document.getElementById('editAlert').classList.add('hidden-panel');
+            document.getElementById('formTitle').textContent = "Criar Publicação na Guilda";
+            document.getElementById('submitBtnText').textContent = "Publicar no Aplicativo";
+            updateLivePreview();
+        };
+
+        // ==========================================
+        // SUBMETER POSTAGEM (NOVA OU EDIÇÃO)
         // ==========================================
         function generateUUID() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -526,37 +650,44 @@
             e.preventDefault();
             
             const profileId = document.getElementById('profileId').value;
-            if(!profileId) { Swal.fire('Erro', 'Selecione um perfil para postar!', 'warning'); return; }
+            if(!profileId) { Swal.fire('Erro', 'Selecione um perfil!', 'warning'); return; }
 
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Publicando...';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Salvando...';
             btn.disabled = true;
 
             try {
-                // 1. Processar opções da enquete
                 const pollInputs = document.querySelectorAll('.poll-input');
                 let pollOptions = [];
-                pollInputs.forEach(input => {
+                
+                // Se estivermos editando, tentamos manter os IDs originais das opções da enquete para não perder votos
+                pollInputs.forEach((input, index) => {
                     if(input.value.trim() !== '') {
-                        pollOptions.push({ id: generateUUID(), text: input.value.trim(), voters: [] });
+                        let optId = generateUUID();
+                        let voters = [];
+                        if(window.editingPostData && window.editingPostData.pollOptions && window.editingPostData.pollOptions[index]) {
+                            optId = window.editingPostData.pollOptions[index].id;
+                            voters = window.editingPostData.pollOptions[index].voters || [];
+                        }
+                        pollOptions.push({ id: optId, text: input.value.trim(), voters: voters });
                     }
                 });
 
-                // 2. Mídia
                 const mUrl = document.getElementById('mediaUrl').value.trim();
                 let mType = document.getElementById('mediaType').value;
                 if(mUrl !== '' && mType === '') mType = 'IMAGE';
                 else if(mUrl === '') mType = '';
 
-                // 3. Texto
                 const pText = document.getElementById('postText').value.trim();
 
                 if(pText === '' && mUrl === '' && pollOptions.length === 0) {
                     throw new Error("A postagem não pode ser vazia!");
                 }
 
-                // 4. Montar o Objeto igual à classe Kotlin
-                const postId = generateUUID();
+                // Montar Objeto (Preservando dados antigos se for Edição)
+                const isEditing = window.editingPostData !== null;
+                const postId = isEditing ? window.editingPostData.id : generateUUID();
+                
                 const postData = {
                     id: postId,
                     uid: auth.currentUser.uid, 
@@ -568,32 +699,25 @@
                     text: pText,
                     mediaUrl: mUrl,
                     mediaType: mType,
-                    timestamp: Date.now(),
-                    likes: [],
-                    commentsCount: 0,
-                    viewsCount: 0,
+                    // Se for novo cria timestamp, se for edição mantem o original
+                    timestamp: isEditing ? window.editingPostData.timestamp : Date.now(),
+                    likes: isEditing ? window.editingPostData.likes : [],
+                    commentsCount: isEditing ? window.editingPostData.commentsCount : 0,
                     pollOptions: pollOptions
                 };
 
-                // 5. Enviar para a coleção guilda_posts (que os usuários podem ler)
-                await setDoc(doc(db, "guilda_posts", postId), postData);
+                // O setDoc com merge:true garante que salva tudo certinho
+                await setDoc(doc(db, "guilda_posts", postId), postData, { merge: true });
 
-                Swal.fire({ title: 'Sucesso!', text: 'Guilda atualizada com a nova postagem.', icon: 'success', background: '#18181b', color: '#fff', confirmButtonColor: '#e50914' });
+                Swal.fire({ title: 'Sucesso!', text: isEditing ? 'Postagem atualizada!' : 'Postagem publicada!', icon: 'success', background: '#18181b', color: '#fff', confirmButtonColor: '#e50914' });
                 
-                // Limpar Form
-                document.getElementById('postText').value = '';
-                document.getElementById('mediaUrl').value = '';
-                document.getElementById('mediaType').value = '';
-                document.getElementById('pollContainer').innerHTML = '';
-                document.getElementById('pollEmptyState').style.display = 'block';
-                window.pollOptionCount = 0;
-                updateLivePreview();
+                cancelEdit(); // Limpa e reseta o form
 
             } catch (error) {
                 console.error(error);
                 Swal.fire({ title: 'Erro!', text: error.message, icon: 'error', background: '#18181b', color: '#fff' });
             } finally {
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Publicar no Aplicativo';
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span id="submitBtnText">${window.editingPostData ? 'Salvar Alterações' : 'Publicar no Aplicativo'}</span>`;
                 btn.disabled = false;
             }
         });

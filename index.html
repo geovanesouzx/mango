@@ -33,7 +33,7 @@
         .feed-card { background: #141414; border-radius: 16px; padding: 16px; margin: 12px; margin-top: 40px;}
         
         .hidden-panel { display: none !important; }
-        .active-menu-item { background-color: rgba(229, 9, 20, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
+        .active-menu-item { background-color: rgba(229, 9, 20, 0.1); color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.2); }
         .loader { border-top-color: #e50914; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -93,7 +93,7 @@
     <!-- ========================================== -->
     <!-- SIDEBAR (MENU LATERAL) -->
     <!-- ========================================== -->
-    <aside id="sidebar" class="w-64 bg-[#141414] border-r border-[#27272a] hidden-panel flex-col h-screen fixed left-0 top-0">
+    <aside id="sidebar" class="w-64 bg-[#141414] border-r border-[#27272a] hidden-panel flex-col h-screen fixed left-0 top-0 z-40">
         <div class="p-6 flex items-center gap-3">
             <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
                 <i class="fa-solid fa-play text-white"></i>
@@ -102,11 +102,14 @@
         </div>
 
         <nav class="flex-1 px-4 space-y-2 mt-4">
-            <a href="#" id="menuNewPost" onclick="switchTab('mainContent')" class="menu-btn active-menu-item flex items-center gap-3 px-4 py-3 rounded-xl font-medium border border-transparent transition">
+            <a href="#" id="menuNewPost" onclick="switchTab('mainContent')" class="menu-btn active-menu-item flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-pen-to-square w-5"></i> Nova Postagem
             </a>
             <a href="#" id="menuHistory" onclick="switchTab('historyContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-clock-rotate-left w-5"></i> Histórico
+            </a>
+            <a href="#" id="menuFrames" onclick="switchTab('framesContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
+                <i class="fa-solid fa-border-all w-5"></i> Molduras
             </a>
         </nav>
 
@@ -297,10 +300,33 @@
         </div>
     </main>
 
+    <!-- ========================================== -->
+    <!-- ÁREA 3: MOLDURAS (GERENCIAMENTO) -->
+    <!-- ========================================== -->
+    <main id="framesContent" class="flex-1 ml-64 p-8 hidden-panel">
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Gerenciar Molduras</h2>
+                <p class="text-zinc-400 mt-1">Crie grupos e adicione links de GIFs/PNGs animados para os avatares.</p>
+            </div>
+            <button onclick="openNewGroupModal()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center shadow-lg shadow-red-600/20">
+                <i class="fa-solid fa-plus mr-2"></i>Novo Grupo
+            </button>
+        </header>
+
+        <!-- Container das Molduras -->
+        <div id="framesFeed" class="space-y-8 pb-12">
+            <div class="flex flex-col items-center justify-center py-20 text-zinc-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i>
+                <p>Buscando molduras no banco de dados...</p>
+            </div>
+        </div>
+    </main>
+
     <!-- FIREBASE & LÓGICA DO APP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, query, orderBy, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
         // CREDENCIAIS
@@ -326,9 +352,10 @@
         window.switchTab = function(tabId) {
             document.getElementById('mainContent').classList.add('hidden-panel');
             document.getElementById('historyContent').classList.add('hidden-panel');
+            document.getElementById('framesContent').classList.add('hidden-panel');
             
             document.querySelectorAll('.menu-btn').forEach(btn => {
-                btn.classList.remove('active-menu-item', 'text-red-500');
+                btn.classList.remove('active-menu-item');
                 btn.classList.add('text-zinc-400');
             });
 
@@ -337,10 +364,14 @@
             if(tabId === 'mainContent') {
                 document.getElementById('menuNewPost').classList.add('active-menu-item');
                 document.getElementById('menuNewPost').classList.remove('text-zinc-400');
-            } else {
+            } else if(tabId === 'historyContent') {
                 document.getElementById('menuHistory').classList.add('active-menu-item');
                 document.getElementById('menuHistory').classList.remove('text-zinc-400');
                 loadHistory();
+            } else if(tabId === 'framesContent') {
+                document.getElementById('menuFrames').classList.add('active-menu-item');
+                document.getElementById('menuFrames').classList.remove('text-zinc-400');
+                loadFrames(); // Carrega as molduras
             }
         };
 
@@ -377,6 +408,7 @@
                 document.getElementById('sidebar').classList.add('hidden-panel');
                 document.getElementById('mainContent').classList.add('hidden-panel');
                 document.getElementById('historyContent').classList.add('hidden-panel');
+                document.getElementById('framesContent').classList.add('hidden-panel');
             }
         });
 
@@ -641,16 +673,13 @@
             document.getElementById('editAlert').classList.add('hidden-panel');
             document.getElementById('formTitle').textContent = "Criar Publicação na Guilda";
             
-            // Corrige o bug do botão de envio de texto desaparecendo
             const btnText = document.getElementById('submitBtnText');
             if(btnText) btnText.textContent = "Publicar no Aplicativo";
             
             updateLivePreview();
         };
 
-        // ==========================================
         // SUBMETER POSTAGEM (NOVA OU EDIÇÃO)
-        // ==========================================
         function generateUUID() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16);
@@ -667,7 +696,6 @@
             const submitIcon = document.getElementById('submitIcon');
             const submitText = document.getElementById('submitBtnText');
             
-            // Altera apenas classes/texto do ícone e span sem destruir a tag (Correção do Bug)
             btn.disabled = true;
             if (submitIcon) {
                 submitIcon.classList.remove('fa-paper-plane');
@@ -681,7 +709,6 @@
                 const pollInputs = document.querySelectorAll('.poll-input');
                 let pollOptions = [];
                 
-                // Se estivermos editando, tentamos manter os IDs originais das opções da enquete para não perder votos
                 pollInputs.forEach((input, index) => {
                     if(input.value.trim() !== '') {
                         let optId = generateUUID();
@@ -705,7 +732,6 @@
                     throw new Error("A postagem não pode ser vazia!");
                 }
 
-                // Montar Objeto (Preservando dados antigos se for Edição)
                 const isEditing = window.editingPostData !== null;
                 const postId = isEditing ? window.editingPostData.id : generateUUID();
                 
@@ -720,19 +746,17 @@
                     text: pText,
                     mediaUrl: mUrl,
                     mediaType: mType,
-                    // Se for novo cria timestamp, se for edição mantem o original
                     timestamp: isEditing ? window.editingPostData.timestamp : Date.now(),
                     likes: isEditing ? window.editingPostData.likes : [],
                     commentsCount: isEditing ? window.editingPostData.commentsCount : 0,
                     pollOptions: pollOptions
                 };
 
-                // O setDoc com merge:true garante que salva tudo certinho
                 await setDoc(doc(db, "guilda_posts", postId), postData, { merge: true });
 
                 Swal.fire({ title: 'Sucesso!', text: isEditing ? 'Postagem atualizada!' : 'Postagem publicada!', icon: 'success', background: '#18181b', color: '#fff', confirmButtonColor: '#e50914' });
                 
-                cancelEdit(); // Limpa e reseta o form
+                cancelEdit(); 
 
             } catch (error) {
                 console.error(error);
@@ -748,6 +772,186 @@
                 }
             }
         });
+
+        // ==========================================
+        // GERENCIAMENTO DE MOLDURAS (NOVO)
+        // ==========================================
+        
+        window.loadFrames = async function() {
+            const container = document.getElementById('framesFeed');
+            container.innerHTML = '<div class="flex flex-col items-center justify-center py-20 text-zinc-500"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i><p>Buscando grupos de molduras...</p></div>';
+            
+            try {
+                const snap = await getDocs(collection(db, "frame_groups"));
+                container.innerHTML = '';
+
+                if(snap.empty) {
+                    container.innerHTML = '<div class="text-center py-20 text-zinc-500"><i class="fa-solid fa-folder-open text-4xl mb-3"></i><p>Nenhum grupo de molduras encontrado.</p></div>';
+                    return;
+                }
+
+                snap.forEach(docSnap => {
+                    const group = docSnap.data();
+                    const groupId = docSnap.id;
+                    const frames = group.frames || [];
+                    const title = group.title || "Grupo sem título";
+
+                    let framesHTML = '';
+                    if (frames.length === 0) {
+                        framesHTML = `<p class="text-zinc-500 text-sm col-span-full py-4 text-center border border-dashed border-[#27272a] rounded-xl">Este grupo está vazio.</p>`;
+                    } else {
+                        frames.forEach(url => {
+                            framesHTML += `
+                                <div class="relative group aspect-square rounded-xl border border-[#27272a] bg-[#09090b] flex items-center justify-center overflow-hidden">
+                                    <img src="${url}" class="w-full h-full object-contain p-2">
+                                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                        <button onclick="removeFrameFromGroup('${groupId}', '${url}')" class="bg-red-600 text-white w-10 h-10 rounded-full hover:scale-110 transition shadow-lg shadow-red-600/30 flex items-center justify-center" title="Excluir Moldura">
+                                            <i class="fa-solid fa-trash text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-[#141414] border border-[#27272a] rounded-2xl p-6 shadow-xl">
+                            <div class="flex justify-between items-center mb-6 border-b border-[#27272a] pb-4">
+                                <h3 class="text-xl font-bold text-white flex items-center">
+                                    <i class="fa-solid fa-layer-group text-red-500 mr-3"></i> ${title} 
+                                    <span class="bg-[#27272a] text-zinc-400 text-xs font-bold px-2.5 py-1 rounded-full ml-3">${frames.length}</span>
+                                </h3>
+                                <div class="flex gap-2">
+                                    <button onclick="editFrameGroupTitle('${groupId}', '${title}')" class="bg-[#27272a] hover:bg-blue-600/20 hover:text-blue-400 text-white px-3.5 py-2 rounded-xl text-sm transition" title="Renomear Grupo"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteFrameGroup('${groupId}')" class="bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-white px-3.5 py-2 rounded-xl text-sm transition" title="Excluir Grupo"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mb-6">
+                                ${framesHTML}
+                            </div>
+
+                            <div class="flex gap-3 mt-4 bg-[#09090b] p-3 rounded-xl border border-[#27272a]">
+                                <i class="fa-solid fa-link text-zinc-500 self-center ml-2"></i>
+                                <input type="url" id="new-frame-${groupId}" class="mango-input flex-1 px-3 py-2 rounded-lg text-sm bg-transparent border-none focus:ring-0" placeholder="Cole o link do GIF ou PNG animado aqui...">
+                                <button onclick="addFrameToGroup('${groupId}')" class="bg-white hover:bg-gray-200 text-black px-6 py-2 rounded-lg font-bold text-sm transition shadow-lg">Adicionar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<div class="text-center py-20 text-red-500">Erro ao carregar molduras do Firebase.</div>';
+            }
+        };
+
+        window.openNewGroupModal = async function() {
+            const { value: groupTitle } = await Swal.fire({
+                title: 'Novo Grupo de Molduras',
+                input: 'text',
+                inputLabel: 'Nome do Grupo (ex: Premium, Eventos)',
+                inputPlaceholder: 'Digite o nome...',
+                showCancelButton: true,
+                confirmButtonText: 'Criar Grupo',
+                cancelButtonText: 'Cancelar',
+                background: '#18181b', color: '#fff', confirmButtonColor: '#e50914',
+                inputValidator: (value) => { if (!value) return 'O nome não pode estar vazio!' }
+            });
+
+            if (groupTitle) {
+                try {
+                    const newId = generateUUID();
+                    await setDoc(doc(db, "frame_groups", newId), {
+                        title: groupTitle,
+                        frames: []
+                    });
+                    Swal.fire({ title: 'Sucesso!', text: 'Grupo criado.', icon: 'success', background: '#18181b', color: '#fff', timer: 1500 });
+                    loadFrames();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível criar o grupo.', 'error'); }
+            }
+        };
+
+        window.editFrameGroupTitle = async function(groupId, currentTitle) {
+            const { value: newTitle } = await Swal.fire({
+                title: 'Renomear Grupo',
+                input: 'text',
+                inputValue: currentTitle,
+                showCancelButton: true,
+                confirmButtonText: 'Salvar',
+                cancelButtonText: 'Cancelar',
+                background: '#18181b', color: '#fff', confirmButtonColor: '#e50914',
+                inputValidator: (value) => { if (!value) return 'O nome não pode estar vazio!' }
+            });
+
+            if (newTitle && newTitle !== currentTitle) {
+                try {
+                    await updateDoc(doc(db, "frame_groups", groupId), { title: newTitle });
+                    loadFrames();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível renomear.', 'error'); }
+            }
+        };
+
+        window.deleteFrameGroup = async function(groupId) {
+            const result = await Swal.fire({
+                title: 'Apagar Grupo Inteiro?', 
+                text: "Isso removerá este grupo do app de todos os usuários. As molduras não sumirão dos avatares de quem já está usando, mas não poderão mais ser escolhidas.", 
+                icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "frame_groups", groupId));
+                    Swal.fire({ title: 'Excluído!', icon: 'success', background: '#18181b', color: '#fff', timer: 1500 });
+                    loadFrames();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível excluir.', 'error'); }
+            }
+        };
+
+        window.addFrameToGroup = async function(groupId) {
+            const input = document.getElementById(`new-frame-${groupId}`);
+            const url = input.value.trim();
+            
+            if(!url) {
+                Swal.fire({ title: 'Aviso', text: 'Cole um link válido da imagem!', icon: 'warning', background: '#18181b', color: '#fff' });
+                return;
+            }
+
+            input.disabled = true;
+            try {
+                await updateDoc(doc(db, "frame_groups", groupId), {
+                    frames: arrayUnion(url)
+                });
+                input.value = '';
+                loadFrames(); // Atualiza a grade
+            } catch(e) {
+                console.error(e);
+                Swal.fire('Erro', 'Não foi possível adicionar a moldura.', 'error');
+            } finally {
+                input.disabled = false;
+            }
+        };
+
+        window.removeFrameFromGroup = async function(groupId, frameUrl) {
+            const result = await Swal.fire({
+                title: 'Remover Moldura?', 
+                text: "Tem certeza que deseja tirar esta moldura das opções do aplicativo?", 
+                icon: 'question',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, remover', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await updateDoc(doc(db, "frame_groups", groupId), {
+                        frames: arrayRemove(frameUrl)
+                    });
+                    loadFrames();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível remover a moldura.', 'error'); }
+            }
+        };
+
     </script>
 </body>
 </html>

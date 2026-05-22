@@ -111,6 +111,9 @@
             <a href="#" id="menuFrames" onclick="switchTab('framesContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-border-all w-5"></i> Molduras
             </a>
+            <a href="#" id="menuMangas" onclick="switchTab('mangasContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
+                <i class="fa-solid fa-book-open w-5"></i> Mangás
+            </a>
         </nav>
 
         <div class="p-4 border-t border-[#27272a]">
@@ -131,7 +134,6 @@
     <!-- ÁREA 1: NOVA POSTAGEM / EDIÇÃO -->
     <!-- ========================================== -->
     <main id="mainContent" class="flex-1 ml-64 p-8 hidden-panel flex gap-8">
-        
         <div class="flex-1 max-w-3xl relative">
             <!-- Aviso flutuante de Edição -->
             <div id="editAlert" class="hidden-panel bg-blue-500/20 border border-blue-500/50 text-blue-400 px-4 py-3 rounded-xl mb-6 flex justify-between items-center">
@@ -323,6 +325,135 @@
         </div>
     </main>
 
+    <!-- ========================================== -->
+    <!-- ÁREA 4: ACERVO DE MANGÁS -->
+    <!-- ========================================== -->
+    <main id="mangasContent" class="flex-1 ml-64 p-8 hidden-panel">
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Acervo de Mangás</h2>
+                <p class="text-zinc-400 mt-1">Gerencie os mangás, adicione capítulos e PDFs para leitura no app.</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="loadMangas()" class="bg-[#27272a] hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition flex items-center">
+                    <i class="fa-solid fa-rotate-right mr-2"></i>Recarregar
+                </button>
+                <button onclick="openMangaModal()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center shadow-lg shadow-red-600/20">
+                    <i class="fa-solid fa-plus mr-2"></i>Novo Mangá
+                </button>
+            </div>
+        </header>
+
+        <!-- Grid de Mangás -->
+        <div id="mangasFeed" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
+            <div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i>
+                <p>Buscando mangás no banco de dados...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODAIS DE MANGÁ (ESCONDIDOS) -->
+    <!-- ========================================== -->
+
+    <!-- Modal Principal de Mangá (Adicionar/Editar) -->
+    <div id="mangaModal" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4">
+        <div class="bg-[#18181b] p-8 rounded-3xl border border-[#27272a] shadow-2xl relative overflow-hidden w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-900"></div>
+            <button onclick="closeMangaModal()" class="absolute top-6 right-6 text-zinc-400 hover:text-white transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            
+            <h2 id="mangaModalTitle" class="text-2xl font-bold text-white mb-6">Adicionar Novo Mangá</h2>
+            
+            <form id="mangaForm" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Coluna 1 -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1">Título do Mangá *</label>
+                            <input type="text" id="mangaTitle" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm" placeholder="Ex: Solo Leveling">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1">Autor / Artista *</label>
+                            <input type="text" id="mangaAuthor" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm" placeholder="Ex: Chugong">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1">Status de Lançamento *</label>
+                            <select id="mangaStatus" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm appearance-none">
+                                <option value="Lançando">Lançando</option>
+                                <option value="Finalizado">Finalizado</option>
+                                <option value="Pausado">Pausado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1">Gêneros (Separados por vírgula) *</label>
+                            <input type="text" id="mangaGenres" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm" placeholder="Ação, Fantasia, Isekai">
+                        </div>
+                    </div>
+                    
+                    <!-- Coluna 2 -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1">URL da Capa (Poster) *</label>
+                            <input type="url" id="mangaPoster" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1">URL do Fundo (Backdrop)</label>
+                            <input type="url" id="mangaBackdrop" class="mango-input w-full px-4 py-2.5 rounded-xl text-sm" placeholder="https://...">
+                        </div>
+                        <div class="h-full flex flex-col">
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1">Sinopse *</label>
+                            <textarea id="mangaSynopsis" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm flex-1 resize-none" placeholder="Digite a história principal do mangá..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-[#27272a] mt-6">
+                    <button type="button" onclick="closeMangaModal()" class="px-5 py-2.5 rounded-xl font-medium text-zinc-400 hover:text-white hover:bg-[#27272a] transition">Cancelar</button>
+                    <button type="submit" id="saveMangaBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-bold transition shadow-lg shadow-red-600/20">Salvar Mangá</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Gerenciamento de Capítulos -->
+    <div id="chaptersModal" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4">
+        <div class="bg-[#18181b] p-6 rounded-3xl border border-[#27272a] shadow-2xl relative overflow-hidden w-full max-w-lg max-h-[90vh] flex flex-col">
+            <button onclick="closeChaptersModal()" class="absolute top-5 right-5 text-zinc-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            
+            <h2 class="text-xl font-bold text-white mb-1"><i class="fa-solid fa-list-ol text-red-500 mr-2"></i> Capítulos</h2>
+            <p id="chaptersModalMangaTitle" class="text-zinc-400 text-sm mb-6 pb-4 border-b border-[#27272a]">Nome do Mangá</p>
+            
+            <!-- Formulário para Inserir Novo Capítulo -->
+            <form id="chapterForm" class="space-y-3 mb-6 bg-[#141414] p-4 rounded-2xl border border-[#27272a]">
+                <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Adicionar Novo PDF</h3>
+                <div class="flex gap-3">
+                    <div class="w-24">
+                        <input type="number" step="0.1" id="chapterNumber" required class="mango-input w-full px-3 py-2 rounded-lg text-sm" placeholder="Cap. Nº">
+                    </div>
+                    <div class="flex-1">
+                        <input type="text" id="chapterTitle" class="mango-input w-full px-3 py-2 rounded-lg text-sm" placeholder="Título (Opcional)">
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-1 relative">
+                        <i class="fa-solid fa-link absolute left-3 top-2.5 text-zinc-500 text-xs"></i>
+                        <input type="url" id="chapterPdfUrl" required class="mango-input w-full pl-8 pr-3 py-2 rounded-lg text-sm" placeholder="Link do PDF (Catbox, Drive)">
+                    </div>
+                    <button type="submit" id="saveChapterBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition shrink-0">
+                        Adicionar
+                    </button>
+                </div>
+            </form>
+
+            <!-- Lista de Capítulos Publicados -->
+            <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3 px-1">Capítulos Publicados</h3>
+            <div id="chaptersList" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar min-h-[150px]">
+                <!-- Injetado via Javascript -->
+            </div>
+        </div>
+    </div>
+
     <!-- FIREBASE & LÓGICA DO APP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
@@ -353,6 +484,7 @@
             document.getElementById('mainContent').classList.add('hidden-panel');
             document.getElementById('historyContent').classList.add('hidden-panel');
             document.getElementById('framesContent').classList.add('hidden-panel');
+            document.getElementById('mangasContent').classList.add('hidden-panel');
             
             document.querySelectorAll('.menu-btn').forEach(btn => {
                 btn.classList.remove('active-menu-item');
@@ -372,6 +504,10 @@
                 document.getElementById('menuFrames').classList.add('active-menu-item');
                 document.getElementById('menuFrames').classList.remove('text-zinc-400');
                 loadFrames(); // Carrega as molduras
+            } else if(tabId === 'mangasContent') {
+                document.getElementById('menuMangas').classList.add('active-menu-item');
+                document.getElementById('menuMangas').classList.remove('text-zinc-400');
+                loadMangas(); // Carrega os mangás
             }
         };
 
@@ -409,6 +545,7 @@
                 document.getElementById('mainContent').classList.add('hidden-panel');
                 document.getElementById('historyContent').classList.add('hidden-panel');
                 document.getElementById('framesContent').classList.add('hidden-panel');
+                document.getElementById('mangasContent').classList.add('hidden-panel');
             }
         });
 
@@ -548,6 +685,13 @@
             } else pPollContainer.classList.add('hidden');
         }
 
+        // FUNÇÃO GLOBAL DE UUID
+        window.generateUUID = function() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16);
+            });
+        };
+
         // ==========================================
         // CARREGAR E GERENCIAR HISTÓRICO
         // ==========================================
@@ -680,12 +824,6 @@
         };
 
         // SUBMETER POSTAGEM (NOVA OU EDIÇÃO)
-        function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16);
-            });
-        }
-
         document.getElementById('postForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -711,7 +849,7 @@
                 
                 pollInputs.forEach((input, index) => {
                     if(input.value.trim() !== '') {
-                        let optId = generateUUID();
+                        let optId = window.generateUUID();
                         let voters = [];
                         if(window.editingPostData && window.editingPostData.pollOptions && window.editingPostData.pollOptions[index]) {
                             optId = window.editingPostData.pollOptions[index].id;
@@ -733,7 +871,7 @@
                 }
 
                 const isEditing = window.editingPostData !== null;
-                const postId = isEditing ? window.editingPostData.id : generateUUID();
+                const postId = isEditing ? window.editingPostData.id : window.generateUUID();
                 
                 const postData = {
                     id: postId,
@@ -774,7 +912,7 @@
         });
 
         // ==========================================
-        // GERENCIAMENTO DE MOLDURAS (NOVO)
+        // GERENCIAMENTO DE MOLDURAS
         // ==========================================
         
         window.loadFrames = async function() {
@@ -860,7 +998,7 @@
 
             if (groupTitle) {
                 try {
-                    const newId = generateUUID();
+                    const newId = window.generateUUID();
                     await setDoc(doc(db, "frame_groups", newId), {
                         title: groupTitle,
                         frames: []
@@ -952,6 +1090,280 @@
             }
         };
 
+        // ==========================================
+        // GERENCIAMENTO DE MANGÁS E CAPÍTULOS (NOVO)
+        // ==========================================
+        window.allMangasCache = [];
+        window.editingMangaId = null;
+        window.currentMangaContextId = null;
+
+        window.loadMangas = async function() {
+            const container = document.getElementById('mangasFeed');
+            container.innerHTML = '<div class="col-span-full flex flex-col items-center py-20 text-zinc-500"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i><p>Carregando mangás...</p></div>';
+            
+            try {
+                // Busca os mangás e organiza pela data de adição
+                const snap = await getDocs(query(collection(db, "mangas"), orderBy("addedAt", "desc")));
+                window.allMangasCache = [];
+                container.innerHTML = '';
+
+                if(snap.empty) {
+                    container.innerHTML = '<div class="col-span-full text-center py-20 text-zinc-500"><i class="fa-solid fa-book text-4xl mb-3"></i><p>Nenhum mangá no acervo.</p></div>';
+                    return;
+                }
+
+                snap.forEach(docSnap => {
+                    const manga = { id: docSnap.id, ...docSnap.data() };
+                    window.allMangasCache.push(manga);
+                    
+                    const isArchived = manga.isArchived ? '<span class="bg-yellow-600/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Arquivado</span>' : '';
+                    const statusColor = manga.status === 'Finalizado' ? 'text-red-500' : 'text-blue-500';
+
+                    container.innerHTML += `
+                        <div class="bg-[#141414] border border-[#27272a] rounded-2xl p-4 hover:border-zinc-700 transition flex gap-4 ${manga.isArchived ? 'opacity-60 grayscale-[0.3]' : ''}">
+                            <img src="${manga.poster}" class="w-24 h-36 object-cover rounded-lg shadow-md cursor-pointer" onclick="openLightbox('${manga.poster}')" onerror="this.src='https://placehold.co/200x300/18181b/ffffff?text=Capa'">
+                            <div class="flex-1 min-w-0 flex flex-col">
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-bold text-white text-lg truncate pr-2" title="${manga.title}">${manga.title}</h3>
+                                    ${isArchived}
+                                </div>
+                                <p class="text-zinc-400 text-xs mb-1">${manga.author || 'Desconhecido'} • <span class="${statusColor} font-bold">${manga.status || 'Lançando'}</span></p>
+                                <p class="text-zinc-500 text-xs line-clamp-2 mb-3" title="${manga.synopsis}">${manga.synopsis || 'Sem sinopse.'}</p>
+                                <div class="mt-auto flex flex-wrap gap-2">
+                                    <button onclick="openChaptersModal('${manga.id}')" class="bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 text-blue-500 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center">
+                                        <i class="fa-solid fa-folder-open mr-1.5"></i> Capítulos
+                                    </button>
+                                    <button onclick="openMangaModal('${manga.id}')" class="bg-[#27272a] hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition" title="Editar Informações">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button onclick="toggleArchiveManga('${manga.id}', ${!manga.isArchived})" class="bg-[#27272a] hover:bg-yellow-600/20 hover:text-yellow-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition" title="${manga.isArchived ? 'Desarquivar' : 'Arquivar (Esconder)'}">
+                                        <i class="fa-solid fa-box-archive"></i>
+                                    </button>
+                                    <button onclick="deleteManga('${manga.id}')" class="bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition" title="Excluir Definitivamente">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div class="col-span-full text-center py-20 text-red-500">Erro ao carregar os mangás.</div>';
+            }
+        };
+
+        window.openMangaModal = function(id = null) {
+            window.editingMangaId = id;
+            const modal = document.getElementById('mangaModal');
+            const form = document.getElementById('mangaForm');
+            const titleEl = document.getElementById('mangaModalTitle');
+            
+            form.reset(); // Limpa o formulário
+            
+            if (id) {
+                titleEl.textContent = 'Editar Mangá';
+                const manga = window.allMangasCache.find(m => m.id === id);
+                if(manga) {
+                    document.getElementById('mangaTitle').value = manga.title || '';
+                    document.getElementById('mangaAuthor').value = manga.author || '';
+                    document.getElementById('mangaPoster').value = manga.poster || '';
+                    document.getElementById('mangaBackdrop').value = manga.backdrop || '';
+                    document.getElementById('mangaStatus').value = manga.status || 'Lançando';
+                    document.getElementById('mangaGenres').value = (manga.genres || []).join(', ');
+                    document.getElementById('mangaSynopsis').value = manga.synopsis || '';
+                }
+            } else {
+                titleEl.textContent = 'Adicionar Novo Mangá';
+            }
+            
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        };
+
+        window.closeMangaModal = function() {
+            const modal = document.getElementById('mangaModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); modal.style.display = 'none'; }, 300);
+        };
+
+        document.getElementById('mangaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveMangaBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...';
+            btn.disabled = true;
+
+            const genresRaw = document.getElementById('mangaGenres').value;
+            const genresArray = genresRaw.split(',').map(g => g.trim()).filter(g => g !== '');
+
+            const mangaData = {
+                title: document.getElementById('mangaTitle').value.trim(),
+                author: document.getElementById('mangaAuthor').value.trim(),
+                poster: document.getElementById('mangaPoster').value.trim(),
+                backdrop: document.getElementById('mangaBackdrop').value.trim(),
+                status: document.getElementById('mangaStatus').value,
+                genres: genresArray,
+                synopsis: document.getElementById('mangaSynopsis').value.trim(),
+                updatedAt: Date.now()
+            };
+
+            const mangaId = window.editingMangaId || window.generateUUID();
+            if(!window.editingMangaId) mangaData.addedAt = Date.now(); // Adiciona data de criação caso seja novo
+
+            try {
+                await setDoc(doc(db, "mangas", mangaId), mangaData, { merge: true });
+                Swal.fire({ title: 'Sucesso!', text: 'Informações salvas com sucesso!', icon: 'success', background: '#18181b', color: '#fff', timer: 1500 });
+                closeMangaModal();
+                loadMangas(); // Atualiza a lista na tela
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Erro', 'Não foi possível salvar o mangá.', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        window.toggleArchiveManga = async function(id, archive) {
+            try {
+                await updateDoc(doc(db, "mangas", id), { isArchived: archive });
+                loadMangas();
+            } catch (e) { Swal.fire('Erro', 'Falha ao alterar status de arquivamento.', 'error'); }
+        };
+
+        window.deleteManga = async function(id) {
+            const result = await Swal.fire({
+                title: 'Excluir Mangá?', 
+                text: "Isso apagará o mangá permanentemente do banco. Capítulos associados devem ser apagados manualmente para evitar lixo no Firebase.", 
+                icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "mangas", id));
+                    Swal.fire({ title: 'Excluído!', icon: 'success', background: '#18181b', color: '#fff', timer: 1500 });
+                    loadMangas();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível excluir.', 'error'); }
+            }
+        };
+
+        // --- SISTEMA INTERNO DE CAPÍTULOS ---
+        window.openChaptersModal = function(mangaId) {
+            window.currentMangaContextId = mangaId;
+            const manga = window.allMangasCache.find(m => m.id === mangaId);
+            document.getElementById('chaptersModalMangaTitle').textContent = manga ? manga.title : 'Mangá Desconhecido';
+            
+            const modal = document.getElementById('chaptersModal');
+            document.getElementById('chapterForm').reset();
+            
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            
+            loadChapters(mangaId);
+        };
+
+        window.closeChaptersModal = function() {
+            const modal = document.getElementById('chaptersModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); modal.style.display = 'none'; }, 300);
+            window.currentMangaContextId = null;
+        };
+
+        window.loadChapters = async function(mangaId) {
+            const list = document.getElementById('chaptersList');
+            list.innerHTML = '<div class="text-center py-8 text-zinc-500"><i class="fa-solid fa-circle-notch fa-spin text-2xl"></i></div>';
+            
+            try {
+                const q = query(collection(db, "mangas", mangaId, "chapters"), orderBy("chapterNumber", "desc"));
+                const snap = await getDocs(q);
+                list.innerHTML = '';
+                
+                if(snap.empty) {
+                    list.innerHTML = '<p class="text-center text-sm text-zinc-500 py-6 border border-dashed border-[#27272a] rounded-xl">Nenhum capítulo publicado ainda.</p>';
+                    return;
+                }
+                
+                snap.forEach(docSnap => {
+                    const cap = docSnap.data();
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center bg-[#141414] border border-[#27272a] p-3 rounded-xl hover:border-zinc-700 transition">
+                            <div class="flex-1 min-w-0 pr-3">
+                                <p class="text-white font-bold text-sm truncate">Capítulo ${cap.chapterNumber}</p>
+                                <p class="text-zinc-500 text-xs truncate">${cap.title || 'Ler PDF Online'}</p>
+                            </div>
+                            <div class="flex gap-2 shrink-0">
+                                <a href="${cap.pdfUrl}" target="_blank" class="w-8 h-8 rounded-lg bg-[#27272a] hover:bg-blue-600/20 hover:text-blue-500 text-zinc-400 flex items-center justify-center transition" title="Testar Arquivo PDF">
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                                </a>
+                                <button onclick="deleteChapter('${mangaId}', '${docSnap.id}')" class="w-8 h-8 rounded-lg bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-zinc-400 flex items-center justify-center transition" title="Excluir Capítulo">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error(error);
+                list.innerHTML = '<p class="text-center text-sm text-red-500 py-4">Erro ao carregar capítulos.</p>';
+            }
+        };
+
+        document.getElementById('chapterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveChapterBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+            btn.disabled = true;
+
+            const mangaId = window.currentMangaContextId;
+            const chapNum = parseFloat(document.getElementById('chapterNumber').value);
+            const chapTitle = document.getElementById('chapterTitle').value.trim();
+            const chapPdf = document.getElementById('chapterPdfUrl').value.trim();
+            
+            const chapId = window.generateUUID();
+
+            try {
+                // Salva o capítulo na sub-coleção "chapters" do mangá correspondente
+                await setDoc(doc(db, "mangas", mangaId, "chapters", chapId), {
+                    chapterNumber: chapNum,
+                    title: chapTitle,
+                    pdfUrl: chapPdf,
+                    addedAt: Date.now()
+                });
+                
+                document.getElementById('chapterForm').reset();
+                document.getElementById('chapterNumber').focus(); // Foco automático para facilitar envios rápidos em massa
+                
+                loadChapters(mangaId);
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Erro', 'Falha ao adicionar capítulo.', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        window.deleteChapter = async function(mangaId, chapterId) {
+            const result = await Swal.fire({
+                title: 'Excluir Capítulo?', 
+                icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "mangas", mangaId, "chapters", chapterId));
+                    loadChapters(mangaId);
+                } catch(e) { Swal.fire('Erro', 'Não foi possível excluir o capítulo.', 'error'); }
+            }
+        };
     </script>
 </body>
 </html>

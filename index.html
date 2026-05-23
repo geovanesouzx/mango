@@ -111,6 +111,9 @@
             <a href="#" id="menuFrames" onclick="switchTab('framesContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-border-all w-5"></i> Molduras
             </a>
+            <a href="#" id="menuEffects" onclick="switchTab('effectsContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
+                <i class="fa-solid fa-wand-magic-sparkles w-5"></i> Efeitos de Perfil
+            </a>
             <a href="#" id="menuMangas" onclick="switchTab('mangasContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-book-open w-5"></i> Mangás
             </a>
@@ -326,6 +329,29 @@
     </main>
 
     <!-- ========================================== -->
+    <!-- NOVA ÁREA: EFEITOS DE TELA CHEIA -->
+    <!-- ========================================== -->
+    <main id="effectsContent" class="flex-1 ml-64 p-8 hidden-panel">
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Gerenciar Efeitos de Perfil</h2>
+                <p class="text-zinc-400 mt-1">Crie grupos e adicione links de animações (APNG/GIF) para sobrepor a tela de perfil.</p>
+            </div>
+            <button onclick="openNewEffectGroupModal()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center shadow-lg shadow-red-600/20">
+                <i class="fa-solid fa-plus mr-2"></i>Novo Grupo
+            </button>
+        </header>
+
+        <!-- Container dos Efeitos -->
+        <div id="effectsFeed" class="space-y-8 pb-12">
+            <div class="flex flex-col items-center justify-center py-20 text-zinc-500">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i>
+                <p>Buscando efeitos no banco de dados...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
     <!-- ÁREA 4: ACERVO DE MANGÁS -->
     <!-- ========================================== -->
     <main id="mangasContent" class="flex-1 ml-64 p-8 hidden-panel">
@@ -489,6 +515,7 @@
             document.getElementById('mainContent').classList.add('hidden-panel');
             document.getElementById('historyContent').classList.add('hidden-panel');
             document.getElementById('framesContent').classList.add('hidden-panel');
+            document.getElementById('effectsContent').classList.add('hidden-panel');
             document.getElementById('mangasContent').classList.add('hidden-panel');
             
             document.querySelectorAll('.menu-btn').forEach(btn => {
@@ -509,6 +536,10 @@
                 document.getElementById('menuFrames').classList.add('active-menu-item');
                 document.getElementById('menuFrames').classList.remove('text-zinc-400');
                 loadFrames(); // Carrega as molduras
+            } else if(tabId === 'effectsContent') {
+                document.getElementById('menuEffects').classList.add('active-menu-item');
+                document.getElementById('menuEffects').classList.remove('text-zinc-400');
+                loadEffects(); // Carrega os efeitos de perfil
             } else if(tabId === 'mangasContent') {
                 document.getElementById('menuMangas').classList.add('active-menu-item');
                 document.getElementById('menuMangas').classList.remove('text-zinc-400');
@@ -550,6 +581,7 @@
                 document.getElementById('mainContent').classList.add('hidden-panel');
                 document.getElementById('historyContent').classList.add('hidden-panel');
                 document.getElementById('framesContent').classList.add('hidden-panel');
+                document.getElementById('effectsContent').classList.add('hidden-panel');
                 document.getElementById('mangasContent').classList.add('hidden-panel');
             }
         });
@@ -1092,6 +1124,185 @@
                     });
                     loadFrames();
                 } catch(e) { Swal.fire('Erro', 'Não foi possível remover a moldura.', 'error'); }
+            }
+        };
+
+        // ==========================================
+        // GERENCIAMENTO DE EFEITOS DE TELA CHEIA
+        // ==========================================
+        
+        window.loadEffects = async function() {
+            const container = document.getElementById('effectsFeed');
+            container.innerHTML = '<div class="flex flex-col items-center justify-center py-20 text-zinc-500"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i><p>Buscando grupos de efeitos...</p></div>';
+            
+            try {
+                const snap = await getDocs(collection(db, "effect_groups"));
+                container.innerHTML = '';
+
+                if(snap.empty) {
+                    container.innerHTML = '<div class="text-center py-20 text-zinc-500"><i class="fa-solid fa-folder-open text-4xl mb-3"></i><p>Nenhum grupo de efeitos encontrado.</p></div>';
+                    return;
+                }
+
+                snap.forEach(docSnap => {
+                    const group = docSnap.data();
+                    const groupId = docSnap.id;
+                    const effects = group.effects || [];
+                    const title = group.title || "Grupo sem título";
+
+                    let effectsHTML = '';
+                    if (effects.length === 0) {
+                        effectsHTML = `<p class="text-zinc-500 text-sm col-span-full py-4 text-center border border-dashed border-[#27272a] rounded-xl">Este grupo está vazio.</p>`;
+                    } else {
+                        effects.forEach(url => {
+                            effectsHTML += `
+                                <div class="relative group aspect-square rounded-xl border border-[#27272a] bg-[#09090b] flex items-center justify-center overflow-hidden">
+                                    <img src="${url}" class="w-full h-full object-contain p-2">
+                                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                        <button onclick="removeEffectFromGroup('${groupId}', '${url}')" class="bg-red-600 text-white w-10 h-10 rounded-full hover:scale-110 transition shadow-lg shadow-red-600/30 flex items-center justify-center" title="Excluir Efeito">
+                                            <i class="fa-solid fa-trash text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-[#141414] border border-[#27272a] rounded-2xl p-6 shadow-xl">
+                            <div class="flex justify-between items-center mb-6 border-b border-[#27272a] pb-4">
+                                <h3 class="text-xl font-bold text-white flex items-center">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-red-500 mr-3"></i> ${title} 
+                                    <span class="bg-[#27272a] text-zinc-400 text-xs font-bold px-2.5 py-1 rounded-full ml-3">${effects.length}</span>
+                                </h3>
+                                <div class="flex gap-2">
+                                    <button onclick="editEffectGroupTitle('${groupId}', '${title}')" class="bg-[#27272a] hover:bg-blue-600/20 hover:text-blue-400 text-white px-3.5 py-2 rounded-xl text-sm transition" title="Renomear Grupo"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteEffectGroup('${groupId}')" class="bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-white px-3.5 py-2 rounded-xl text-sm transition" title="Excluir Grupo"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mb-6">
+                                ${effectsHTML}
+                            </div>
+
+                            <div class="flex gap-3 mt-4 bg-[#09090b] p-3 rounded-xl border border-[#27272a]">
+                                <i class="fa-solid fa-link text-zinc-500 self-center ml-2"></i>
+                                <input type="url" id="new-effect-${groupId}" class="mango-input flex-1 px-3 py-2 rounded-lg text-sm bg-transparent border-none focus:ring-0" placeholder="Cole o link da animação (GIF/APNG) de tela cheia aqui...">
+                                <button onclick="addEffectToGroup('${groupId}')" class="bg-white hover:bg-gray-200 text-black px-6 py-2 rounded-lg font-bold text-sm transition shadow-lg">Adicionar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<div class="text-center py-20 text-red-500">Erro ao carregar efeitos do Firebase.</div>';
+            }
+        };
+
+        window.openNewEffectGroupModal = async function() {
+            const { value: groupTitle } = await Swal.fire({
+                title: 'Novo Grupo de Efeitos',
+                input: 'text',
+                inputLabel: 'Nome do Grupo (ex: Especial, Premium)',
+                inputPlaceholder: 'Digite o nome...',
+                showCancelButton: true,
+                confirmButtonText: 'Criar Grupo',
+                cancelButtonText: 'Cancelar',
+                background: '#18181b', color: '#fff', confirmButtonColor: '#e50914',
+                inputValidator: (value) => { if (!value) return 'O nome não pode estar vazio!' }
+            });
+
+            if (groupTitle) {
+                try {
+                    const newId = window.generateUUID();
+                    await setDoc(doc(db, "effect_groups", newId), {
+                        title: groupTitle,
+                        effects: []
+                    });
+                    Swal.fire({ title: 'Sucesso!', text: 'Grupo criado.', icon: 'success', background: '#18181b', color: '#fff', timer: 1500 });
+                    loadEffects();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível criar o grupo.', 'error'); }
+            }
+        };
+
+        window.editEffectGroupTitle = async function(groupId, currentTitle) {
+            const { value: newTitle } = await Swal.fire({
+                title: 'Renomear Grupo',
+                input: 'text',
+                inputValue: currentTitle,
+                showCancelButton: true,
+                confirmButtonText: 'Salvar',
+                cancelButtonText: 'Cancelar',
+                background: '#18181b', color: '#fff', confirmButtonColor: '#e50914',
+                inputValidator: (value) => { if (!value) return 'O nome não pode estar vazio!' }
+            });
+
+            if (newTitle && newTitle !== currentTitle) {
+                try {
+                    await updateDoc(doc(db, "effect_groups", groupId), { title: newTitle });
+                    loadEffects();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível renomear.', 'error'); }
+            }
+        };
+
+        window.deleteEffectGroup = async function(groupId) {
+            const result = await Swal.fire({
+                title: 'Apagar Grupo Inteiro?', 
+                text: "Isso removerá este grupo do app de todos os usuários. Não sumirá dos perfis de quem já está usando.", 
+                icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "effect_groups", groupId));
+                    Swal.fire({ title: 'Excluído!', icon: 'success', background: '#18181b', color: '#fff', timer: 1500 });
+                    loadEffects();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível excluir.', 'error'); }
+            }
+        };
+
+        window.addEffectToGroup = async function(groupId) {
+            const input = document.getElementById(`new-effect-${groupId}`);
+            const url = input.value.trim();
+            
+            if(!url) {
+                Swal.fire({ title: 'Aviso', text: 'Cole um link válido da imagem!', icon: 'warning', background: '#18181b', color: '#fff' });
+                return;
+            }
+
+            input.disabled = true;
+            try {
+                await updateDoc(doc(db, "effect_groups", groupId), {
+                    effects: arrayUnion(url)
+                });
+                input.value = '';
+                loadEffects(); // Atualiza a grade
+            } catch(e) {
+                console.error(e);
+                Swal.fire('Erro', 'Não foi possível adicionar o efeito.', 'error');
+            } finally {
+                input.disabled = false;
+            }
+        };
+
+        window.removeEffectFromGroup = async function(groupId, effectUrl) {
+            const result = await Swal.fire({
+                title: 'Remover Efeito?', 
+                text: "Tem certeza que deseja tirar este efeito das opções do aplicativo?", 
+                icon: 'question',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, remover', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await updateDoc(doc(db, "effect_groups", groupId), {
+                        effects: arrayRemove(effectUrl)
+                    });
+                    loadEffects();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível remover o efeito.', 'error'); }
             }
         };
 

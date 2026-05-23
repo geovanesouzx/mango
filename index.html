@@ -371,7 +371,12 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-semibold text-zinc-400 mb-1">Título do Mangá *</label>
-                            <input type="text" id="mangaTitle" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm" placeholder="Ex: Solo Leveling">
+                            <div class="flex gap-2">
+                                <input type="text" id="mangaTitle" required class="mango-input w-full px-4 py-2.5 rounded-xl text-sm" placeholder="Ex: Solo Leveling">
+                                <button type="button" onclick="autoFetchManga()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center shrink-0 shadow-lg shadow-blue-600/20" title="Preencher com MyAnimeList">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Puxar Info
+                                </button>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-zinc-400 mb-1">Autor / Artista *</label>
@@ -1363,6 +1368,92 @@
                     loadChapters(mangaId);
                 } catch(e) { Swal.fire('Erro', 'Não foi possível excluir o capítulo.', 'error'); }
             }
+        };
+
+        // ==========================================
+        // AUTO-PREENCHIMENTO VIA MYANIMELIST (JIKAN API)
+        // ==========================================
+        window.autoFetchManga = async function() {
+            const titleInput = document.getElementById('mangaTitle').value.trim();
+            if (!titleInput) {
+                Swal.fire({ title: 'Aviso', text: 'Digite o nome do mangá no campo de título primeiro!', icon: 'warning', background: '#18181b', color: '#fff' });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Buscando...', text: 'Procurando no banco de dados mundial...',
+                allowOutsideClick: false, background: '#18181b', color: '#fff',
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                // Chama a API pública gratuita
+                const response = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(titleInput)}&limit=5`);
+                const data = await response.json();
+
+                if (!data.data || data.data.length === 0) {
+                    Swal.fire({ title: 'Não encontrado', text: 'Nenhum mangá com esse nome exato foi achado.', icon: 'error', background: '#18181b', color: '#fff' });
+                    return;
+                }
+
+                window.tempFetchedMangaData = data.data; // Salva pra usar na seleção
+
+                let optionsHtml = '<div class="space-y-3 text-left mt-4 max-h-80 overflow-y-auto custom-scrollbar pr-2">';
+                data.data.forEach((manga, index) => {
+                    const author = manga.authors.length > 0 ? manga.authors.map(a => a.name).join(', ') : 'Desconhecido';
+                    optionsHtml += `
+                        <div class="flex items-center gap-3 p-3 bg-[#141414] border border-[#27272a] rounded-xl cursor-pointer hover:border-blue-500 hover:bg-[#1a1a1a] transition" onclick="selectMangaData(${index})">
+                            <img src="${manga.images.jpg.image_url}" class="w-12 h-16 object-cover rounded-md">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white text-sm font-bold truncate">${manga.title}</p>
+                                <p class="text-zinc-500 text-xs truncate">${author} • ${manga.status}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                optionsHtml += '</div>';
+
+                Swal.fire({
+                    title: 'Selecione o Mangá Correto',
+                    html: optionsHtml,
+                    showConfirmButton: false, showCancelButton: true, cancelButtonText: 'Cancelar',
+                    background: '#18181b', color: '#fff'
+                });
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ title: 'Erro', text: 'Falha ao conectar com o MyAnimeList.', icon: 'error', background: '#18181b', color: '#fff' });
+            }
+        };
+
+        window.selectMangaData = function(index) {
+            const manga = window.tempFetchedMangaData[index];
+            Swal.close();
+
+            // Preenche os campos
+            document.getElementById('mangaTitle').value = manga.title || '';
+            document.getElementById('mangaAuthor').value = manga.authors.length > 0 ? manga.authors.map(a => a.name).join(', ') : '';
+            document.getElementById('mangaPoster').value = manga.images.jpg.large_image_url || manga.images.jpg.image_url || '';
+            
+            // Traduz e preenche status
+            let status = "Lançando";
+            if (manga.status === "Finished") status = "Finalizado";
+            if (manga.status === "On Hiatus" || manga.status === "Discontinued") status = "Pausado";
+            document.getElementById('mangaStatus').value = status;
+
+            // Preenche Gêneros
+            document.getElementById('mangaGenres').value = manga.genres ? manga.genres.map(g => g.name).join(', ') : '';
+            
+            // Preenche Sinopse (Limpando o texto de créditos do MyAnimeList)
+            let synopsis = manga.synopsis || '';
+            if (synopsis) synopsis = synopsis.replace('[Written by MAL Rewrite]', '').trim();
+            document.getElementById('mangaSynopsis').value = synopsis;
+
+            Swal.fire({
+                title: 'Sucesso!',
+                text: 'Dados preenchidos automaticamente! (A sinopse costuma vir em Inglês, lembre-se de traduzi-la).',
+                icon: 'success', timer: 3000, background: '#18181b', color: '#fff'
+            });
         };
     </script>
 </body>

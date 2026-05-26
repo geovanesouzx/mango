@@ -108,6 +108,9 @@
             <a href="#" id="menuHistory" onclick="switchTab('historyContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-clock-rotate-left w-5"></i> Histórico
             </a>
+            <a href="#" id="menuReports" onclick="switchTab('reportsContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
+                <i class="fa-solid fa-flag w-5"></i> Relatórios
+            </a>
             <a href="#" id="menuFrames" onclick="switchTab('framesContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-border-all w-5"></i> Molduras
             </a>
@@ -290,7 +293,7 @@
                 <h2 class="text-2xl font-bold text-white">Histórico de Postagens</h2>
                 <p class="text-zinc-400 mt-1">Gerencie, edite e apague publicações feitas na guilda.</p>
             </div>
-            <button onclick="loadHistory()" class="bg-[#27272a] hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+            <button onclick="loadHistory()" class="bg-[#27272a] hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center">
                 <i class="fa-solid fa-rotate-right mr-2"></i>Recarregar
             </button>
         </header>
@@ -306,7 +309,27 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- ÁREA 3: MOLDURAS (GERENCIAMENTO) -->
+    <!-- ÁREA 3: RELATÓRIOS (NOVO) -->
+    <!-- ========================================== -->
+    <main id="reportsContent" class="flex-1 ml-64 p-8 hidden-panel">
+        <header class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Relatórios de Usuários</h2>
+                <p class="text-zinc-400 mt-1">Gerencie as denúncias sobre links quebrados e problemas nos conteúdos.</p>
+            </div>
+            <button onclick="loadReports()" class="bg-[#27272a] hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition flex items-center">
+                <i class="fa-solid fa-rotate-right mr-2"></i>Recarregar
+            </button>
+        </header>
+
+        <!-- Grid de Relatórios -->
+        <div id="reportsFeed" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
+            <!-- Injetado via Javascript -->
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- ÁREA 4: MOLDURAS (GERENCIAMENTO) -->
     <!-- ========================================== -->
     <main id="framesContent" class="flex-1 ml-64 p-8 hidden-panel">
         <header class="mb-8 flex justify-between items-end">
@@ -329,7 +352,7 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- NOVA ÁREA: EFEITOS DE TELA CHEIA -->
+    <!-- ÁREA 5: EFEITOS DE TELA CHEIA -->
     <!-- ========================================== -->
     <main id="effectsContent" class="flex-1 ml-64 p-8 hidden-panel">
         <header class="mb-8 flex justify-between items-end">
@@ -352,7 +375,7 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- ÁREA 4: ACERVO DE MANGÁS -->
+    <!-- ÁREA 6: ACERVO DE MANGÁS -->
     <!-- ========================================== -->
     <main id="mangasContent" class="flex-1 ml-64 p-8 hidden-panel">
         <header class="mb-8 flex justify-between items-end">
@@ -514,6 +537,7 @@
         window.switchTab = function(tabId) {
             document.getElementById('mainContent').classList.add('hidden-panel');
             document.getElementById('historyContent').classList.add('hidden-panel');
+            document.getElementById('reportsContent').classList.add('hidden-panel');
             document.getElementById('framesContent').classList.add('hidden-panel');
             document.getElementById('effectsContent').classList.add('hidden-panel');
             document.getElementById('mangasContent').classList.add('hidden-panel');
@@ -532,6 +556,10 @@
                 document.getElementById('menuHistory').classList.add('active-menu-item');
                 document.getElementById('menuHistory').classList.remove('text-zinc-400');
                 loadHistory();
+            } else if(tabId === 'reportsContent') {
+                document.getElementById('menuReports').classList.add('active-menu-item');
+                document.getElementById('menuReports').classList.remove('text-zinc-400');
+                loadReports(); // Carrega os relatórios
             } else if(tabId === 'framesContent') {
                 document.getElementById('menuFrames').classList.add('active-menu-item');
                 document.getElementById('menuFrames').classList.remove('text-zinc-400');
@@ -580,6 +608,7 @@
                 document.getElementById('sidebar').classList.add('hidden-panel');
                 document.getElementById('mainContent').classList.add('hidden-panel');
                 document.getElementById('historyContent').classList.add('hidden-panel');
+                document.getElementById('reportsContent').classList.add('hidden-panel');
                 document.getElementById('framesContent').classList.add('hidden-panel');
                 document.getElementById('effectsContent').classList.add('hidden-panel');
                 document.getElementById('mangasContent').classList.add('hidden-panel');
@@ -947,6 +976,98 @@
                 }
             }
         });
+
+        // ==========================================
+        // CARREGAR E GERENCIAR RELATÓRIOS (NOVO)
+        // ==========================================
+        window.loadReports = async function() {
+            const container = document.getElementById('reportsFeed');
+            container.innerHTML = '<div class="col-span-full flex flex-col items-center py-20 text-zinc-500"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i><p>Carregando relatórios...</p></div>';
+            
+            try {
+                // Traz os mais recentes primeiro
+                const q = query(collection(db, "reports"), orderBy("timestamp", "desc"));
+                const snap = await getDocs(q);
+                container.innerHTML = '';
+
+                if(snap.empty) {
+                    container.innerHTML = '<div class="col-span-full text-center py-20 text-zinc-500"><i class="fa-solid fa-shield-halved text-4xl mb-3 text-green-500/50"></i><p>Nenhum relatório! Tudo 100%.</p></div>';
+                    return;
+                }
+
+                snap.forEach(docSnap => {
+                    const rep = docSnap.data();
+                    const date = new Date(rep.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' });
+                    
+                    let statusBadge = '';
+                    if(rep.status === 'PENDING' || !rep.status) {
+                        statusBadge = '<span class="bg-yellow-500/20 text-yellow-500 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">Pendente</span>';
+                    } else if(rep.status === 'RESOLVED') {
+                        statusBadge = '<span class="bg-green-500/20 text-green-500 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">Resolvido</span>';
+                    } else {
+                        statusBadge = `<span class="bg-blue-500/20 text-blue-500 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">${rep.status}</span>`;
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-[#141414] border border-[#27272a] rounded-2xl p-5 hover:border-zinc-700 transition flex flex-col relative overflow-hidden">
+                            ${rep.status === 'RESOLVED' ? '<div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>' : '<div class="absolute top-0 left-0 w-1 h-full bg-yellow-500"></div>'}
+                            
+                            <div class="flex justify-between items-start mb-3 border-b border-[#27272a] pb-4">
+                                <div class="pr-2">
+                                    <h3 class="font-bold text-white text-base">${rep.contentTitle || 'Conteúdo Desconhecido'}</h3>
+                                    <p class="text-[11px] text-zinc-500 mt-1 uppercase tracking-wider">${date} • ID: ${rep.contentId}</p>
+                                </div>
+                                <div>${statusBadge}</div>
+                            </div>
+                            
+                            <div class="mb-5 flex-1">
+                                <p class="text-red-400 font-semibold text-sm mb-2"><i class="fa-solid fa-flag mr-1.5"></i> ${rep.reason || 'Outro'}</p>
+                                <div class="bg-[#09090b] p-3.5 rounded-xl border border-[#27272a]">
+                                    <p class="text-zinc-300 text-sm italic leading-relaxed">"${rep.details || 'Sem detalhes adicionais fornecidos pelo usuário.'}"</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-auto pt-4 border-t border-[#27272a] flex justify-end gap-3">
+                                ${rep.status !== 'RESOLVED' ? `<button onclick="updateReportStatus('${rep.id}', 'RESOLVED')" class="bg-green-600/10 border border-green-500/20 hover:bg-green-600/20 text-green-500 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center"><i class="fa-solid fa-check mr-1.5"></i> Resolver</button>` : ''}
+                                <button onclick="deleteReport('${rep.id}')" class="bg-[#27272a] hover:bg-red-600/20 hover:text-red-500 text-zinc-400 px-4 py-2 rounded-xl text-xs font-bold transition"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<div class="col-span-full text-center py-20 text-red-500">Erro ao carregar os relatórios. Verifique as permissões do Firebase.</div>';
+            }
+        };
+
+        window.updateReportStatus = async function(id, newStatus) {
+            try {
+                await updateDoc(doc(db, "reports", id), { status: newStatus });
+                // Mostra um toast rápido
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, background: '#18181b', color: '#fff' });
+                Toast.fire({ icon: 'success', title: 'Status atualizado com sucesso!' });
+                loadReports();
+            } catch(e) { 
+                Swal.fire('Erro', 'Falha ao atualizar o status do relatório.', 'error'); 
+            }
+        };
+
+        window.deleteReport = async function(id) {
+            const result = await Swal.fire({
+                title: 'Excluir Relatório?', 
+                text: "Tem certeza? Esta ação não pode ser desfeita.",
+                icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e50914', cancelButtonColor: '#27272a',
+                confirmButtonText: 'Sim, excluir', cancelButtonText: 'Cancelar', background: '#18181b', color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "reports", id));
+                    loadReports();
+                } catch(e) { Swal.fire('Erro', 'Não foi possível excluir o relatório.', 'error'); }
+            }
+        };
 
         // ==========================================
         // GERENCIAMENTO DE MOLDURAS

@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Biblioteca SortableJS para o sistema de Arrastar e Soltar (Drag and Drop) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { background-color: #09090b; color: #ffffff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -20,6 +22,7 @@
         ::-webkit-scrollbar-track { background: #09090b; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 
         /* Estilos do Simulador de Celular */
         .phone-mockup {
@@ -36,6 +39,22 @@
         .active-menu-item { background-color: rgba(229, 9, 20, 0.1); color: #ef4444 !important; border-color: rgba(239, 68, 68, 0.2); }
         .loader { border-top-color: #e50914; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- Estilos Adicionados do Admin 2 (Organizador e Top 10) --- */
+        .sortable-item { cursor: grab; }
+        .sortable-item:active { cursor: grabbing; }
+        .sortable-ghost { opacity: 0.4; border: 2px dashed #3b82f6 !important; background-color: rgba(59, 130, 246, 0.1) !important; }
+        .drag-handle { cursor: grab; }
+        .drag-handle:active { cursor: grabbing; }
+
+        .top10-slot { position: relative; border: 2px dashed #27272a; border-radius: 0.75rem; aspect-ratio: 2/3; display: flex; align-items: center; justify-content: center; transition: all 0.2s; overflow: hidden; background: #09090b; }
+        .top10-slot.filled { border-style: solid; border-color: #eab308; background: transparent; }
+        .top10-slot:hover .remove-top10-btn { display: flex; }
+        .remove-top10-btn { display: none; position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9); border-radius: 50%; width: 24px; height: 24px; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; z-index: 10; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .top10-catalog-item { cursor: pointer; transition: transform 0.2s; position: relative; }
+        .top10-catalog-item:hover { transform: scale(1.05); }
+        .top10-catalog-item.selected { opacity: 0.5; filter: grayscale(80%); border-color: #eab308 !important; }
+        .top10-catalog-item.selected::after { content: 'NO TOP 10'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(234, 179, 8, 0.9); color: black; font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 4px; }
     </style>
 </head>
 <body class="flex min-h-screen">
@@ -101,7 +120,7 @@
             <span class="font-bold text-xl tracking-tight">Mango<span class="text-red-600">PRO</span></span>
         </div>
 
-        <nav class="flex-1 px-4 space-y-2 mt-4">
+        <nav class="flex-1 px-4 space-y-2 mt-4 overflow-y-auto custom-scrollbar">
             <a href="#" id="menuNewPost" onclick="switchTab('mainContent')" class="menu-btn active-menu-item flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-pen-to-square w-5"></i> Nova Postagem
             </a>
@@ -119,6 +138,15 @@
             </a>
             <a href="#" id="menuMangas" onclick="switchTab('mangasContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
                 <i class="fa-solid fa-book-open w-5"></i> Mangás
+            </a>
+
+            <!-- ADICIONADO DO ADMIN 2 -->
+            <div class="mt-6 mb-2 px-2"><p class="text-xs font-bold text-zinc-500 uppercase tracking-wider">App & Rankings</p></div>
+            <a href="#" id="menuTop10" onclick="switchTab('top10Content')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
+                <i class="fa-solid fa-trophy w-5 text-yellow-500"></i> Top 10 (Rankings)
+            </a>
+            <a href="#" id="menuOrganize" onclick="switchTab('organizeContent')" class="menu-btn flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-[#27272a] px-4 py-3 rounded-xl font-medium border border-transparent transition">
+                <i class="fa-solid fa-layer-group w-5 text-blue-500"></i> Organizar Início
             </a>
         </nav>
 
@@ -403,12 +431,106 @@
     </main>
 
     <!-- ========================================== -->
+    <!-- ÁREA ADICIONADA: TOP 10 (RANKINGS) -->
+    <!-- ========================================== -->
+    <main id="top10Content" class="flex-1 ml-64 p-8 hidden-panel">
+        <header class="mb-8">
+            <h2 class="text-2xl font-bold text-white">Gerenciador de Top 10</h2>
+            <p class="text-zinc-400 mt-1">Crie e edite rankings de Top 10 para exibir na tela inicial do app.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-12">
+            <!-- Editor -->
+            <div class="lg:col-span-2 bg-[#141414] border border-[#27272a] rounded-2xl p-6 md:p-8 flex flex-col h-full">
+                <div class="flex justify-between items-center mb-6 border-b border-[#27272a] pb-4">
+                    <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-pen text-yellow-500 mr-2"></i> Editor de Ranking</h3>
+                    <button type="button" onclick="clearTop10Edit()" class="text-sm text-yellow-500 hover:text-yellow-400 font-bold border border-yellow-500/50 rounded-lg px-3 py-1 transition">Limpar / Criar Novo</button>
+                </div>
+                
+                <input type="hidden" id="top10-edit-id">
+                
+                <div class="mb-6">
+                    <label class="block text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wider">Título do Ranking</label>
+                    <input type="text" id="top10-title" placeholder="Ex: Top 10 Animes de Ação" class="mango-input w-full px-4 py-3 rounded-xl text-lg font-bold text-yellow-500 focus:border-yellow-500" required>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-semibold text-zinc-400 mb-4 uppercase tracking-wider">Posições (1 ao 10)</label>
+                    <div class="grid grid-cols-5 gap-3" id="top10-slots-container">
+                        <!-- Slots injetados via JS -->
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-400"></i>
+                        Para alterar, remova a obra clicando no (X) vermelho e selecione outra na lista abaixo.
+                    </p>
+                </div>
+
+                <div class="flex-1 flex flex-col min-h-[300px] border-t border-[#27272a] pt-6">
+                    <label class="block text-xs font-bold text-yellow-500 mb-4 uppercase">Selecione no seu Catálogo para preencher a próxima posição vazia:</label>
+                    <div class="relative mb-4">
+                        <i class="fa-solid fa-search absolute left-4 top-3.5 text-zinc-500"></i>
+                        <input type="text" id="top10-catalog-search" placeholder="Pesquisar por nome no catálogo..." class="mango-input w-full pl-10 pr-4 py-3 rounded-xl text-sm focus:border-yellow-500">
+                    </div>
+                    
+                    <div id="top10-catalog-grid" class="flex-1 overflow-y-auto grid grid-cols-4 sm:grid-cols-5 gap-3 pr-2 custom-scrollbar">
+                        <div class="col-span-full flex justify-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-zinc-500"></i></div>
+                    </div>
+                </div>
+
+                <button id="save-top10-btn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-yellow-600/20 transition duration-200 mt-6 flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> <span id="top10-btn-text">Salvar Ranking Top 10</span>
+                </button>
+            </div>
+
+            <!-- Saved Rankings -->
+            <div class="lg:col-span-1 bg-[#141414] border border-[#27272a] rounded-2xl p-6 h-fit max-h-[85vh] flex flex-col">
+                <h3 class="text-lg font-bold text-white mb-4 border-b border-[#27272a] pb-4"><i class="fa-solid fa-list-ol text-zinc-400 mr-2"></i> Rankings Salvos</h3>
+                <div id="saved-top10-list" class="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                    <div class="flex justify-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-zinc-500"></i></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- ÁREA ADICIONADA: ORGANIZAR INÍCIO (DRAG AND DROP) -->
+    <!-- ========================================== -->
+    <main id="organizeContent" class="flex-1 ml-64 p-8 hidden-panel">
+        <header class="mb-8">
+            <h2 class="text-2xl font-bold text-white">Organizar Tela Inicial</h2>
+            <p class="text-zinc-400 mt-1">Altere a ordem de exibição dos Carrosséis Normais e Top 10 na tela inicial do aplicativo.</p>
+        </header>
+
+        <div class="bg-[#141414] border border-[#27272a] rounded-2xl p-6 md:p-8 max-w-4xl mx-auto">
+            <div class="mb-6 border-b border-[#27272a] pb-6 flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 shrink-0 mt-1">
+                    <i class="fa-solid fa-circle-info text-xl"></i>
+                </div>
+                <p class="text-zinc-400 text-sm leading-relaxed pt-1">
+                    Clique nas três linhas <i class="fa-solid fa-bars mx-1 text-zinc-300"></i> e arraste para alterar a ordem no app. <br>
+                    <span class="text-zinc-500">Nota: Carrosséis fixos (como "Continuar Assistindo") permanecem no topo automaticamente.</span>
+                </p>
+            </div>
+
+            <div class="bg-[#09090b] p-4 rounded-xl border border-[#27272a] min-h-[300px]">
+                <ul id="sortable-carousels-list" class="space-y-3">
+                    <div class="flex justify-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-2xl text-zinc-500"></i></div>
+                </ul>
+            </div>
+
+            <button id="save-order-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-blue-600/20 transition duration-200 mt-6 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> <span id="organize-btn-text">Salvar Nova Ordem</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
     <!-- MODAIS DE MANGÁ (ESCONDIDOS) -->
     <!-- ========================================== -->
 
     <!-- Modal Principal de Mangá (Adicionar/Editar) -->
     <div id="mangaModal" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center opacity-0 transition-opacity duration-300 backdrop-blur-sm p-4">
-        <div class="bg-[#18181b] p-8 rounded-3xl border border-[#27272a] shadow-2xl relative overflow-hidden w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#18181b] p-8 rounded-3xl border border-[#27272a] shadow-2xl relative overflow-hidden w-full max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-900"></div>
             <button onclick="closeMangaModal()" class="absolute top-6 right-6 text-zinc-400 hover:text-white transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
             
@@ -511,7 +633,8 @@
     <!-- FIREBASE & LÓGICA DO APP -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, query, orderBy, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        // IMPORTANTE: Foi adicionado onSnapshot, serverTimestamp, addDoc e writeBatch aos imports do Firebase originais!
+        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, query, orderBy, updateDoc, arrayUnion, arrayRemove, onSnapshot, serverTimestamp, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
         // CREDENCIAIS
@@ -533,6 +656,16 @@
         window.editingPostData = null; // Armazena a postagem que está sendo editada
         window.allPostsCache = []; // Cache do histórico
 
+        // --- Variáveis Globais Adicionadas para o Top 10 e Organizador ---
+        let catalogData = []; 
+        let top10GroupsData = []; 
+        let normalCarouselsData = [];
+        let currentTop10Selection = new Array(10).fill(null); 
+        let sortableInstance = null;
+
+        // Utilitário Adicionado
+        window.escapeHTML = function(str) { return str == null ? '' : String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
+
         // Navegação de Abas
         window.switchTab = function(tabId) {
             document.getElementById('mainContent').classList.add('hidden-panel');
@@ -541,6 +674,10 @@
             document.getElementById('framesContent').classList.add('hidden-panel');
             document.getElementById('effectsContent').classList.add('hidden-panel');
             document.getElementById('mangasContent').classList.add('hidden-panel');
+            
+            // Novas Abas
+            document.getElementById('top10Content').classList.add('hidden-panel');
+            document.getElementById('organizeContent').classList.add('hidden-panel');
             
             document.querySelectorAll('.menu-btn').forEach(btn => {
                 btn.classList.remove('active-menu-item');
@@ -572,6 +709,12 @@
                 document.getElementById('menuMangas').classList.add('active-menu-item');
                 document.getElementById('menuMangas').classList.remove('text-zinc-400');
                 loadMangas(); // Carrega os mangás
+            } else if(tabId === 'top10Content') {
+                document.getElementById('menuTop10').classList.add('active-menu-item');
+                document.getElementById('menuTop10').classList.remove('text-zinc-400');
+            } else if(tabId === 'organizeContent') {
+                document.getElementById('menuOrganize').classList.add('active-menu-item');
+                document.getElementById('menuOrganize').classList.remove('text-zinc-400');
             }
         };
 
@@ -603,6 +746,12 @@
                 
                 switchTab('mainContent');
                 await fetchUserProfiles(user.uid);
+
+                // --- STARTUP DAS NOVAS FUNÇÕES ADMIN 2 ---
+                listenForCatalog();
+                initTop10Logic();
+                initOrganizeLogic();
+
             } else {
                 document.getElementById('loginSection').classList.remove('hidden-panel');
                 document.getElementById('sidebar').classList.add('hidden-panel');
@@ -612,6 +761,9 @@
                 document.getElementById('framesContent').classList.add('hidden-panel');
                 document.getElementById('effectsContent').classList.add('hidden-panel');
                 document.getElementById('mangasContent').classList.add('hidden-panel');
+                // Esconde novas abas
+                document.getElementById('top10Content').classList.add('hidden-panel');
+                document.getElementById('organizeContent').classList.add('hidden-panel');
             }
         });
 
@@ -1428,12 +1580,8 @@
         };
 
         // ==========================================
-        // GERENCIAMENTO DE MANGÁS E CAPÍTULOS (NOVO)
+        // GERENCIAMENTO DE MANGÁS E CAPÍTULOS
         // ==========================================
-        window.allMangasCache = [];
-        window.editingMangaId = null;
-        window.currentMangaContextId = null;
-
         window.loadMangas = async function() {
             const container = document.getElementById('mangasFeed');
             container.innerHTML = '<div class="col-span-full flex flex-col items-center py-20 text-zinc-500"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-red-600 mb-4"></i><p>Carregando mangás...</p></div>';
